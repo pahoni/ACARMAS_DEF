@@ -29,6 +29,7 @@ class Manager(Tk):
         db=Datos()
         try:
             db.crear()
+            messagebox.showinfo(title="Exito",message="LA BASE DE DATOS se creó con EXITO")
         except:
             messagebox.showinfo(title="Informacion",message="La BASE DE DATOS ya esta CREADA")        
 
