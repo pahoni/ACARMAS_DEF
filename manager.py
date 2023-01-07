@@ -13,8 +13,8 @@ class Manager(Tk):
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
         self.title("ACARMAS")
-        self.geometry("1200x900")  
-        self.menu()       
+        self.geometry("1200x800")  
+        #self.menu()       
         container=Frame(self)
         container.pack(side=TOP,fill=BOTH,expand=True)
         container.configure(bg="green")               
@@ -33,13 +33,13 @@ class Manager(Tk):
         except:
             messagebox.showinfo(title="Informacion",message="La BASE DE DATOS ya esta CREADA")        
 
-#--> Creamos una pequeña barra de menu para crear la BD y tablas
-    def menu(self):
-        menubar=Menu()
-        menudata=Menu(menubar,tearoff=0)
-        menudata.add_command(label="Crear/conectar BASE DE DATOS",command=self.crearDB)
-        menubar.add_cascade(label="Inicio",menu=menudata)
-        self.config(menu=menubar)
+#--> Creamos una pequeña barra de menu para crear la BD y tablas para pruebas
+#    def menu(self):
+#        menubar=Menu()
+#        menudata=Menu(menubar,tearoff=0)
+#        menudata.add_command(label="Crear/conectar BASE DE DATOS",command=self.crearDB)
+#        menubar.add_cascade(label="Inicio",menu=menudata)
+#        self.config(menu=menubar)
 
     def show_frame(self,container):
         frame=self.frames[container]
