@@ -297,14 +297,7 @@ class Socios(Frame):
         btn.bind("<Enter>",on_enter)
         btn.bind("<Leave>",on_leave)
         btn.place(x=x,y=y,width=160,height=40)    
-
-#--> Funcion para realizar instrucciones sobre la BD
-    def salir(self):
-        pass
-#        valor=messagebox.askquestion("salir","¿Desea salir de la aplicacion?")
-#        if valor == "yes"   destroy                 
-
-        
+  
 
 #--> Funcion para realizar instrucciones sobre la BD
     def eje_consulta(self,consulta,parametros=()):
@@ -313,15 +306,15 @@ class Socios(Frame):
            result=db.consultas(consulta,parametros) 
         except:            
            pass
-        return result   
+        return result 
+
+#--> Funcion para validar las fechas de Alta, Nacimiento Y Baja
+
+
 
 #--> Funcion para validar campos de entrada minimos
     def validacion(self,nombre,apel1,apel2,fecA,numsoc,):
         return len(nombre)>0 and len(apel1)>0 and len(apel2)>0 and len(fecA)>0 and len(numsoc)>0
-
-#fecN,fecB,motB,dni,profe,deudapen,MemberDir,CargoMember,
-#    numsoc,estciv,discapaci,calle,muni,prov,pais,codpos,telmov,telfij,corE,nomcon,apecon1,apecon2,telcon,
-#    relcon,RGPD,WhatsApp,imgOK,fecUltAct):
 
 #--> Funcion de dar de alta un socio al pulsar el boton "ALTA SOCIO"
     def altasocio(self):
@@ -361,25 +354,24 @@ class Socios(Frame):
 
 #---> Compruebo si la validacion de los datos minimos de entrada han sido correctos
         if self.validacion(nombre,apel1,apel2,fecA,numsoc):
-               
-            try:
-#                conn=sqlite3.connect("database.db")
-#                cursor=conn.cursor()
-         
-                consulta=("""INSERT INTO socio VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""")                                                   
-                
-                parametros=(nombre,apel1,apel2,fecA,fecN,fecB,motB,dni,profe,deudapen,
-                check_1,CargoMember,numsoc,estciv,discapaci,calle,muni,prov,
-                pais,codpos,telmov,telfij,corE,nomcon,apecon1,apecon2,telcon,relcon,
-                check_2,check_3,check_4,self.hoy)
+#---> Compruebo fechas validas, caso de ser cumplimentadas.
+            
+                try:
+            
+                    consulta=("""INSERT INTO socio VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""")                                                   
+                    
+                    parametros=(nombre,apel1,apel2,fecA,fecN,fecB,motB,dni,profe,deudapen,
+                    check_1,CargoMember,numsoc,estciv,discapaci,calle,muni,prov,
+                    pais,codpos,telmov,telfij,corE,nomcon,apecon1,apecon2,telcon,relcon,
+                    check_2,check_3,check_4,self.hoy)
 
-#                cursor.execute(consulta,parametros)        
-                
-                self.eje_consulta(consulta,parametros)
-                messagebox.showinfo(title="ALTA SOCIO",message="Alta Socio realizado con exito")
-            except sqlite3.OperationalError as error:
-                print("Eror en Alta: ", error)
-                messagebox.showwarning(title="Error",message="ERROR AL DAR DE ALTA SOCIO")
+                    self.eje_consulta(consulta,parametros)
+
+                    messagebox.showinfo(title="ALTA SOCIO",message="Alta Socio realizado con exito")
+
+                except sqlite3.OperationalError as error:
+                    print("Eror en Alta: ", error)
+                    messagebox.showwarning(title="Error",message="ERROR AL DAR DE ALTA SOCIO")
         else:
             messagebox.showwarning(title="Error",message="Rellene los campos,Nombre,Apellidos,Fecha Alta y nº Socio")
 
@@ -395,7 +387,7 @@ class Socios(Frame):
         self.check_3=IntVar()
         self.check_4=IntVar()
         self.hoy=(datetime.today().strftime("%Y-%m-%d"))
-        
+        self.fecha=IntVar
         
 
 
@@ -565,7 +557,7 @@ class Socios(Frame):
         btnCoSo=self.botones(400,650,"CONSULTA","blue","white",cmd="")
         btnMoSo=self.botones(600,650,"MODIFICACION","blue","white",cmd="")        
         btnlISo=self.botones(800,650,"LISTADO","blue","white",cmd="")
-        btnSalir=self.botones(1000,650,"SALIR","black","#D51032",cmd=self.salir)
+
         
 #
 class Actividad(Frame):
