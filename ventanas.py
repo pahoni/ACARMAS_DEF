@@ -200,7 +200,7 @@ class Registro(Frame):
         btn1=self.botones(560,540,"REGRESAR","blue","white",cmd=self.control2)
         btn=self.botones(700,540,"REGISTRAR","blue","white",cmd=self.registro)
 
-#--------------> clase Container
+#--------------> clase Container  <----------------------------------------------------------------
 #--> Vamos a crear el contenedor, con su controlador, y sus botones para "Gestion Socios" y
 #     "Gestion Actividades","Proveedores", "Caja" y "Varios".
 class Container(Frame):
@@ -270,7 +270,7 @@ class Container(Frame):
     def recibo(self):
         self.show_frames(Recibo)        
 
-
+#------------------------------- SOCIOS --------------------------------------------------------
 #--> Creamos las clases, de Socios, de Actividad, de Proveedor, de Apuntediario y de Recibo.
 class Socios(Frame):
     def __init__(self,padre): 
@@ -308,17 +308,58 @@ class Socios(Frame):
            pass
         return result 
 
-#--> Funcion para validar las fechas de Alta, Nacimiento Y Baja
+#--> Funcion para limpiar campos de entrada
+    def limpiar_campos(self):
 
+        self.nombre.delete(0,END)
+        self.apel1.delete(0,END)
+        self.apel2.delete(0,END)
+        self.fecA.delete(0,END)
+        self.fecN.delete(0,END)
+        self.fecB.delete(0,END)
+        self.motB.delete(0,END)
+        self.dni.delete(0,END)
+        self.profe.delete(0,END)
+        self.deudapen.delete(0,END)
+        self.check_1.set(0)
+        self.CargoMember.delete(0,END)
+        self.numsoc.delete(0,END)
+        self.estciv.delete(0,END)
+        self.discapaci.delete(0,END)
+        self.calle.delete(0,END)
+        self.muni.delete(0,END)
+        self.prov.delete(0,END)
+        self.pais.delete(0,END)
+        self.codpos.delete(0,END)
+        self.telmov.delete(0,END)
+        self.telfij.delete(0,END)
+        self.corE.delete(0,END)
+        self.nomcon.delete(0,END)
+        self.apecon1.delete(0,END)
+        self.apecon2.delete(0,END)
+        self.telcon.delete(0,END)
+        self.relcon.delete(0,END)
+        self.check_2.set(0)
+        self.check_3.set(0)
+        self.check_4.set(0)
 
 
 #--> Funcion para validar campos de entrada minimos
-    def validacion(self,nombre,apel1,apel2,fecA,numsoc,):
-        return len(nombre)>0 and len(apel1)>0 and len(apel2)>0 and len(fecA)>0 and len(numsoc)>0
+    def validacion_entrada(self,nombre,apel1,apel2,fecA,numsoc):
+        return len(nombre)>0 and len(apel1)>0 and len(apel2)>0 and len(fecA)>0 and len(numsoc)>0        
+   
+    def valfecha(self,fechv):
+        try:              
+            fechv=datetime.strptime(fechv,'%Y-%m-%d').date()            
+            return True
+        except ValueError:                                
+            return False
 
-#--> Funcion de dar de alta un socio al pulsar el boton "ALTA SOCIO"
+    def valida_numero(self,numero):
+        return  numero.isdecimal()
+
+#--> Funcion de dar de alta un socio al pulsar el boton "ALTA SOCIO"-------------------------
     def altasocio(self):
-
 #---> Recogemos los datos introducidos por el usuario        
         nombre=self.nombre.get()
         apel1=self.apel1.get()
@@ -352,29 +393,74 @@ class Socios(Frame):
         check_3=self.check_3.get()
         check_4=self.check_4.get()
 
-#---> Compruebo si la validacion de los datos minimos de entrada han sido correctos
-        if self.validacion(nombre,apel1,apel2,fecA,numsoc):
-#---> Compruebo fechas validas, caso de ser cumplimentadas.
-            
-                try:
-            
-                    consulta=("""INSERT INTO socio VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""")                                                   
-                    
-                    parametros=(nombre,apel1,apel2,fecA,fecN,fecB,motB,dni,profe,deudapen,
-                    check_1,CargoMember,numsoc,estciv,discapaci,calle,muni,prov,
-                    pais,codpos,telmov,telfij,corE,nomcon,apecon1,apecon2,telcon,relcon,
-                    check_2,check_3,check_4,self.hoy)
+#---> Compruebo si  los datos minimos de entrada han sido RELLENADOS
+        if self.validacion_entrada(nombre,apel1,apel2,fecA,numsoc):            
+#---> Validamos fecha de alta
+            fechv=fecA                    
+            if self.valfecha(fechv):                
+                numero=numsoc
+                if self.valida_numero(numero):
+                    try:
+                        consulta=("""INSERT INTO socio VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""")                                            
+                        parametros=(nombre,apel1,apel2,fecA,fecN,fecB,motB,dni,profe,deudapen,
+                                    check_1,CargoMember,numsoc,estciv,discapaci,calle,muni,prov,
+                                    pais,codpos,telmov,telfij,corE,nomcon,apecon1,apecon2,telcon,relcon,
+                                    check_2,check_3,check_4,self.hoy)
 
-                    self.eje_consulta(consulta,parametros)
-
-                    messagebox.showinfo(title="ALTA SOCIO",message="Alta Socio realizado con exito")
-
-                except sqlite3.OperationalError as error:
-                    print("Eror en Alta: ", error)
-                    messagebox.showwarning(title="Error",message="ERROR AL DAR DE ALTA SOCIO")
+                        self.eje_consulta(consulta,parametros)
+                        messagebox.showinfo(title="ALTA SOCIO",message="Alta Socio realizado con exito")                   
+                        self.limpiar_campos()
+                                       
+                    except sqlite3.OperationalError as error:
+                           print("Eror en Alta BD: ", error)
+                           messagebox.showwarning(title="Error",message="ERROR AL DAR DE ALTA SOCIO") 
+                else:
+                    messagebox.showerror(title="ALTA SOCIO",message="Numero de socio debe ser Numerico")
+            else:
+                messagebox.showerror(title="FECHA ALTA",message="Fecha debe ser formato AAAA-MM-DD")
         else:
-            messagebox.showwarning(title="Error",message="Rellene los campos,Nombre,Apellidos,Fecha Alta y nº Socio")
+            messagebox.showwarning(title="ALTA SOCIO",message="Rellene los campos,Nombre,Apellidos,Fecha Alta y nº Socio")
 
+#--> Funcion para CONSULTAR un socio al pulsar el boton "CONSULTA"-------------------------
+    def consulta_socio(self):
+            
+            nombre=self.nombre.get()            
+            apel1=self.apel1.get()
+            apel2=self.apel2.get()        
+
+            if (nombre=="") and (apel1=="") and (apel2==""):            
+               messagebox.showwarning(title="CONSULTA SOCIO",message="Rellene los campos >> Nombre y 2 Apellidos << ")
+            else:    
+                try:
+                  with sqlite3.connect("database.db") as conn:
+                    cursor=conn.cursor()
+                    consulta=("SELECT * FROM socio WHERE nombre=? and apel1=? and apel2=?")
+                    parametros=(nombre,apel1,apel2)
+                    cursor.execute(consulta,parametros)
+                    resultado=cursor.fetchone()
+                    conn.commit()
+                    print("nombre: ",nombre)
+                    print("resultado:",resultado)   
+                except sqlite3.OperationalError as error:
+                       print("Eror en Consulta BD: ", error)
+                       messagebox.showwarning(title="Error",message="Error en CONSULTA SOCIO") 
+
+
+                if resultado=="":
+                    self.nombre.delete(0,END)
+                    self.apel1.delete(0,END)
+                    self.apel2.delete(0,END)
+                    messagebox.showinfo(title="CONSULTA",message="Socio no existe")                 
+                else:
+                    self.mostrar_campos(resultado)
+
+    def mostrar_campos(self,resultado):        
+        for campo in resultado:      
+            self.nombre.insert(campo[1])          
+            self.apel1.insert(campo[2])
+            self.apel2.insert(campo[3])
+            self.fecA.insert(campo[4])
+            self.fecN.insert(campo[5])
 
     def widgets(self):
         socios=Label(self,text="SOCIOS",bg="greenyellow",font="Arial 18")
@@ -388,6 +474,9 @@ class Socios(Frame):
         self.check_4=IntVar()
         self.hoy=(datetime.today().strftime("%Y-%m-%d"))
         self.fecha=IntVar
+        self.numero=NUMERIC
+        self.valido=False
+       
         
 
 
@@ -554,7 +643,7 @@ class Socios(Frame):
 #--> Botones de las acciones "ALTA" - "BAJA" - "CONSULTA" - "MODIFICACIONES" - "LISTADO"
         btnAlSo=self.botones(20,650,"ALTA","blue","white",cmd=self.altasocio)    
         btnBaSo=self.botones(200,650,"BAJA","blue","white",cmd="")    
-        btnCoSo=self.botones(400,650,"CONSULTA","blue","white",cmd="")
+        btnCoSo=self.botones(400,650,"CONSULTA","blue","white",cmd=self.consulta_socio)
         btnMoSo=self.botones(600,650,"MODIFICACION","blue","white",cmd="")        
         btnlISo=self.botones(800,650,"LISTADO","blue","white",cmd="")
 
@@ -589,10 +678,10 @@ class Actividad(Frame):
         pass
 
     def widgets(self):
-        actividad=Label(self,text="ACTIVIDADES",bg="#33CBFF",font="Arial 18")
+        actividad=Label(self,text="GESTION DE ACTIVIDADES",bg="#33CBFF",font="Arial 18")
         actividad.pack()
         actividad.place(x=0,y=0,height=30,width=1200)
-        self.frame=Frame(self,bg="#5AC8EB",bd=15,relief="groove")   
+        self.frame=Frame(self,bg="#9ACDD7",bd=15,relief="groove")   
         self.frame.place(x=0,y=30,width=1200,height=800) 
 
 
@@ -624,10 +713,10 @@ class Proveedor(Frame):
         pass
 
     def widgets(self):
-        proveedor=Label(self,text="PROVEEDORES",bg="orange",font="Arial 18")
+        proveedor=Label(self,text="PROVEEDORES",bg="#FF6633",font="Arial 18")
         proveedor.pack()
         proveedor.place(x=0,y=0,height=30,width=1200)
-        self.frame=Frame(self,bg="#FF6633",bd=15,relief="groove")   
+        self.frame=Frame(self,bg="#EEAF82",bd=15,relief="groove")   
         self.frame.place(x=0,y=30,width=1200,height=800) 
 
 
@@ -659,7 +748,7 @@ class Apuntediario(Frame):
         apuntediario=Label(self,text="APUNTES - DIARIO",bg="yellow",font="Arial 18")
         apuntediario.pack()
         apuntediario.place(x=0,y=0,height=30,width=1200)
-        self.frame=Frame(self,bg="#D9FF33",bd=15,relief="groove")   
+        self.frame=Frame(self,bg="#DADB7F",bd=15,relief="groove")   
         self.frame.place(x=0,y=30,width=1200,height=800) 
 
 
@@ -688,10 +777,10 @@ class Recibo(Frame):
         btn.place(x=x,y=y,width=240,height=40)    
 
     def widgets(self):
-        recibo=Label(self,text="RECIBO",bg="#FF33C9",font="Arial 18")
+        recibo=Label(self,text="RECIBO",bg="#E2C5E0",font="Arial 18")
         recibo.pack()
         recibo.place(x=0,y=0,height=30,width=1200)
-        self.frame=Frame(self,bg="#FF33B7",bd=15,relief="groove")   
+        self.frame=Frame(self,bg="#E2C5E0",bd=15,relief="groove")   
         self.frame.place(x=0,y=30,width=1200,height=800) 
     
 
