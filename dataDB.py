@@ -1,4 +1,4 @@
-#--> Creamos la base de datos que contendrá las tablas usadas en este proyecto
+#--> Creamos la base de datos que contendrá alguna de las tablas usadas en este proyecto
 import sqlite3
 
 class Datos:

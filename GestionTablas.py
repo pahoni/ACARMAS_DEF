@@ -8,8 +8,7 @@ cursor=conn.cursor()
 cursor.execute("""CREATE TABLE IF NOT EXISTS socio (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre VARCHAR(20) NOT NULL,
-    apel1 VARCHAR(25) NOT NULL,
-    apel2 VARCHAR(25) NOT NULL,
+    apellidos VARCHAR(50) NOT NULL,
     fecA DATE,
     fecN DATE,
     fecb DATE,
@@ -31,14 +30,25 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS socio (
     telfij VARCHAR(12),
     corE VARCHAR(40),
     nomcon VARCHAR(20),
-    apecon1 VARCHAR(25),
-    apecon2 VARCHAR(25),
+    apellcon VARCHAR(50),
     telcon VARCHAR(12),
     relcon VARCHAR(20),
     RGPD INTEGER DEFAULT 0,
     WhatsApp INTEGER DEFAULT 0,
     ImgOk INTEGER DEFAULT 0,
     fecUltAct DATE NOT NULL)""")
+conn.commit
+conn.close    
+
+#--> Creamos la tabla de Proveedor  >> proveedor  <<:
+cursor.execute("""CREATE TABLE IF NOT EXISTS proveedor (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombrepro VARCHAR(30) NOT NULL,
+    cifpro VARCHAR(12),
+    relpro VARCHAR(100),
+    fecApro DATE,   
+    fecBpro DATE,
+    fecUltActpro DATE NOT NULL)""")
 
 conn.commit
 conn.close    
