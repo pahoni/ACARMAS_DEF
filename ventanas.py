@@ -471,6 +471,8 @@ class Socios(Frame):
 
     def mostrar_campos(self,resultado):
         self.id=resultado[0]
+        self.nombre.insert(END,resultado[1])
+        self.apellidos.insert(END,resultado[2])
         self.fecA.insert(END,resultado[3])
         self.fecN.insert(END,resultado[4])
         self.fecB.insert(END,resultado[5])
@@ -498,63 +500,74 @@ class Socios(Frame):
         self.check_2.set(resultado[27])
         self.check_3.set(resultado[28])
         self.check_4.set(resultado[29])
-        fecUltAct=self.hoy
+        self.fecUltAct=self.hoy
 
 #--> Funcion para MODIFICAR un socio, al pulsar el boton "MODIFICAR", compruebo si self.id==-1, en cuyo 
 #    caso realizo una consulta y muestro los datos recuperados, para que los modifique. Y si self.id no es -1,
 #    es que ya tiene almazenado el id del socio y solo falta updatear el registro.
     def modifica_socio(self):
-        nombre=self.nombre.get()            
-        apellidos=self.apellidos.get() 
-        if (nombre=="") or (apellidos==""):            
-            messagebox.showwarning(title="MODIFICACION SOCIO",message="Rellene los campos >> Nombre y 2 Apellidos << ")
-        else:            
-            try:
-                with sqlite3.connect("database.db") as conn:                    
-                    cursor=conn.cursor()
-                    consulta=("SELECT * FROM socio WHERE nombre=? and apellidos=?")
-                    parametros=(nombre,apellidos)
-                    cursor.execute(consulta,parametros)
-                    resultado=cursor.fetchone()
-                    conn.commit()  
-                    print("resultado",resultado)
-            except sqlite3.OperationalError as error:
+        if self.id==-1:
+            nombre=self.nombre.get()            
+            apellidos=self.apellidos.get() 
+            if (nombre=="") or (apellidos==""):            
+                messagebox.showwarning(title="MODIFICACION SOCIO",message="Rellene los campos >> Nombre y 2 Apellidos << ")
+            else:            
+                try:
+                    with sqlite3.connect("database.db") as conn:                    
+                        cursor=conn.cursor()
+                        consulta=("SELECT * FROM socio WHERE nombre=? and apellidos=?")
+                        parametros=(nombre,apellidos)
+                        cursor.execute(consulta,parametros)
+                        resultado=cursor.fetchone()
+                        conn.commit()  
+                        print("resultado",resultado)
+                except sqlite3.OperationalError as error:
                     print("Eror en Modificacion/consul BD: ", error)
                     messagebox.showwarning(title="Error",message="Error en MODIFICACION/select SOCIO") 
-            if resultado is None:
+                if resultado is None:
                     self.nombre.delete(0,END)
                     self.apellidos.delete(0,END)
                     messagebox.showinfo(title="MODIFICACION",message="SOCIO no existe")                 
-            else:
-                #messagebox.showinfo(title="Modificacion",message="Haga las modificaciones y pulse MODIFICACION")     
-                self.mostrar_campos(resultado)
-                print("self.id: ", self.id)
-                id=resultado[0]
-                try:
-                    consulta1="""UPDATE socio SET nombre=?,apellidos=?,fecA=?,fecN=?,fecB=?,motB=?,
-                                dni=?,profe=?,deudapen=?,MemberDir=?,CargoMember=?,numsoc=?,estciv=?,discapaci=?,
-                                calle=?,muni=?,prov=?,pais=?,codpos=?,telmov=?,telfij=?,corE=?,nomcon=?,
-                                apellcon=?,telcon=?,relcon=?,RGPD=?,WhatsApp=?,ImgOk=?  WHERE id=?"""
-                             
-                    parametro1=(self.nombre.get(),self.apellidos.get(),self.fecA.get(),self.fecN.get(),
-                                self.fecB.get(),self.motB.get(),self.dni.get(),self.profe.get(),
-                                self.deudapen.get(),self.check_1.get(),self.CargoMember.get(),
-                                self.numsoc.get(),self.estciv.get(),self.discapaci.get(),self.calle.get(),
-                                self.muni.get(),self.prov.get(),self.pais.get(),self.codpos.get(),
-                                self.telmov.get(),self.telfij.get(),self.corE.get(),self.nomcon.get(),
-                                self.apellcon.get(),self.telcon.get(),self.relcon.get(),self.check_2.get(),
-                                self.check_3.get(),self.check_4.get())
-
-                    with sqlite3.connect("database.db") as conn:
-                        cursor=conn.cursor()
-                        cursor.execute(consulta1,parametro1)                    
-                        conn.commit
-                        messagebox.showinfo(title="Modificacion",message="MODIFICACION REALIZADA CON EXITO")
-                        #self.id=-1   
-                except sqlite3.OperationalError as error:
+                else:
+                    messagebox.showinfo(title="Modificacion",message="Haga las modificaciones y pulse MODIFICACION")     
+                    self.limpiar_campos()
+                    self.mostrar_campos(resultado)
+                    print("self.id: ", self.id)
+                    id=resultado[0]
+        else:
+            self.nombre.focus_get()
+            #self.nombre.get()
+            self.apellidos.get()
+            self.fecA.get()
+            self.fecN.get()
+            self.fecB.get()
+            self.motB.get()
+            self.dni.get()
+            try:
+                parametro1=[self.id,self.nombre.get(),self.apellidos.get(),self.fecA.get(),self.fecN.get()]#,
+                    #self.fecB.get(),self.motB.get(),self.dni.get(),self.profe.get(),self.deudapen.get(),
+                    #self.check_1.get(),self.CargoMember.get(),self.numsoc.get(),self.estciv.get(),
+                    #self.discapaci.get(),self.calle.get(),self.muni.get(),self.prov.get(),self.pais.get(),
+                    #self.codpos.get(),self.telmov.get(),self.telfij.get(),self.corE.get(),self.nomcon.get(),
+                    #self.apellcon.get(),self.telcon.get(),self.relcon.get(),self.check_2.get(),
+                    #self.check_3.get(),self.check_4.get(),self.fecUltAct)
+                consulta1="""UPDATE socio SET nombre=?,apellidos=?,fecA=?,fecN=? WHERE id=?"""
+                    #,fecB=?,motB=?,dni=?
+                    #profe=?,deudapen=?,MemberDir=?,CargoMember=?,numsoc=?,estciv=?,discapaci=?,calle=?,
+                    #muni=?,prov=?,pais=?,codpos=?,telmov=?,telfij=?,corE=?,nomcon=?,apellcon=?,telcon=?,
+                    #relcon=?,RGPD=?,WhatsApp=?,ImgOk=?  WHERE id=?"""
+                print("parametro1: ",parametro1)
+                print("consulta1: ",consulta1)    
+                with sqlite3.connect("database.db") as conn:
+                     cursor=conn.cursor()
+                     cursor.execute(consulta1,parametro1)                    
+                     conn.commit
+                     messagebox.showinfo(title="Modificacion",message="MODIFICACION REALIZADA CON EXITO")
+                     self.limpiar_campos()
+                     self.id=-1
+            except sqlite3.OperationalError as error:
                     print("Eror en Modificacion BD: ", error)
-
-        #self.limpiar_campos()
+        
         #self.mostrar_campos()
 
 
