@@ -535,14 +535,16 @@ class Socios(Frame):
                     print("self.id: ", self.id)
                     id=resultado[0]
         else:
-            self.nombre.focus_get()
-            #self.nombre.get()
-            self.apellidos.get()
-            self.fecA.get()
-            self.fecN.get()
-            self.fecB.get()
-            self.motB.get()
-            self.dni.get()
+            nombre=self.nombre.get()
+            apellidos=self.apellidos.get()
+            fecA=self.fecA.get()
+            fecN=self.fecN.get()
+            print("self.fecA.get():",self.fecA.get())
+            print("self.fecN.get():",self.fecN.get())
+            print("nombre: ",nombre)
+            print("apellidos: ",apellidos)
+            print("fecA: ",fecA)
+            print("fecN: ",fecN)
             try:
                 parametro1=[self.id,self.nombre.get(),self.apellidos.get(),self.fecA.get(),self.fecN.get()]#,
                     #self.fecB.get(),self.motB.get(),self.dni.get(),self.profe.get(),self.deudapen.get(),
