@@ -1,0 +1,32 @@
+*=======================================================*
+  Documento: Diseño Aplicativo
+  Fecha    : 22/12/2022
+  Asunto   : Definir la arquitectura del aplicativo
+             y el contenido de cada carpeta y ficheros  
+			 
+*=======================================================*
+
+Estructura de directorios
+-------------------------
+  Los directorios significativos del proyecto son los siguientes:
+  
+  + Raiz      ( Scripts de arranque )
+  |
+  +--> Model  ( Directorio con las clases de negocio del 
+  |             aplicativo )
+  |
+  +--> Tools  ( funciones comunes al aplicativo )
+  |
+  +--> DOCUMENTACION  ( Información del proyecto )
+  |
+  +--> test   ( Scripts de testing del modelo
+  |
+  +--> Data   ( bases de datos y scripts de carga y creación 
+                de las mismas )
+
+
+
+
+1. Carpeta Model
+----------------
+ *  User.py 
