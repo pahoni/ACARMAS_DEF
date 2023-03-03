@@ -7,7 +7,10 @@ from PIL import Image, ImageTk
 import cv2
 import imutils
 import sqlite3
-import json
+import itertools
+import pandas as pd
+
+
 #-------------------- clase Login
 #--> Empezamos definiendo la clase login y el metodo init con sus caracteristicas, donde el usuario
 #    se loga y se identifica, con sus controles.
@@ -304,13 +307,13 @@ class Socios(Frame):
         fg=bcolor,
         bg=fcolor,
         border=1,
-        font="Arial 16",
+        font="Arial 12",
         activeforeground=fcolor,
         activebackground=bcolor,
         command=cmd)
         btn.bind("<Enter>",on_enter)
         btn.bind("<Leave>",on_leave)
-        btn.place(x=x,y=y,width=160,height=40)    
+        btn.place(x=x,y=y,width=200,height=40)    
   
 #--> Funcion para realizar instrucciones sobre la BD y recuperar el ultimo numero de socio y mostrarlo.
     def recuperar_numso(self):
@@ -419,7 +422,8 @@ class Socios(Frame):
         if self.validacion_entrada(nombre,apellidos,fecA,numsoc):            
 #---> Validamos fecha de alta
             fechv=fecA                    
-            if self.valfecha(fechv):                
+            if self.valfecha(fechv):  
+#---> Validamos que el numero de socio, sea numerico                              
                 numero=numsoc
                 if self.valida_numero(numero):
                     try:
@@ -519,8 +523,7 @@ class Socios(Frame):
                         parametros=(nombre,apellidos)
                         cursor.execute(consulta,parametros)
                         resultado=cursor.fetchone()
-                        conn.commit()  
-                        print("resultado",resultado)
+                        conn.commit() 
                 except sqlite3.OperationalError as error:
                     print("Eror en Modificacion/consul BD: ", error)
                     messagebox.showwarning(title="Error",message="Error en MODIFICACION/select SOCIO") 
@@ -529,37 +532,53 @@ class Socios(Frame):
                     self.apellidos.delete(0,END)
                     messagebox.showinfo(title="MODIFICACION",message="SOCIO no existe")                 
                 else:
-                    messagebox.showinfo(title="Modificacion",message="Haga las modificaciones y pulse MODIFICACION")     
                     self.limpiar_campos()
                     self.mostrar_campos(resultado)
-                    print("self.id: ", self.id)
-                    id=resultado[0]
+                    messagebox.showinfo(title="Modificacion",message="Haga las modificaciones y pulse MODIFICACION")     
+                    _id=resultado[0]
         else:
-            nombre=self.nombre.get()
-            apellidos=self.apellidos.get()
-            fecA=self.fecA.get()
-            fecN=self.fecN.get()
-            print("self.fecA.get():",self.fecA.get())
-            print("self.fecN.get():",self.fecN.get())
-            print("nombre: ",nombre)
-            print("apellidos: ",apellidos)
-            print("fecA: ",fecA)
-            print("fecN: ",fecN)
+            _nombre=self.nombre.get()
+            _apellidos=self.apellidos.get()
+            _fecA=self.fecA.get()
+            _fecN=self.fecN.get()
+            _fecB=self.fecB.get()
+            _motB=self.motB.get()
+            _dni=self.dni.get()
+            _profe=self.profe.get()
+            _deudapen=self.deudapen.get()
+            _check_1=self.check_1.get()
+            _CargoMember=self.CargoMember.get()
+            _numsoc=self.numsoc.get()
+            _estciv=self.estciv.get()
+            _discapaci=self.discapaci.get()
+            _calle=self.calle.get()
+            _muni=self.muni.get()
+            _prov=self.prov.get()
+            _pais=self.pais.get()
+            _codpos=self.codpos.get()
+            _telmov=self.telmov.get()
+            _telfij=self.telfij.get()
+            _corE=self.corE.get()
+            _nomcon=self.nomcon.get()
+            _apellcon=self.apellcon.get()
+            _telcon=self.telcon.get()
+            _relcon=self.relcon.get()
+            _check_2=self.check_2.get()
+            _check_3=self.check_3.get()
+            _check_4=self.check_4.get()
+            _fecUltAct=self.hoy
+            _id=self.id
             try:
-                parametro1=[self.id,self.nombre.get(),self.apellidos.get(),self.fecA.get(),self.fecN.get()]#,
-                    #self.fecB.get(),self.motB.get(),self.dni.get(),self.profe.get(),self.deudapen.get(),
-                    #self.check_1.get(),self.CargoMember.get(),self.numsoc.get(),self.estciv.get(),
-                    #self.discapaci.get(),self.calle.get(),self.muni.get(),self.prov.get(),self.pais.get(),
-                    #self.codpos.get(),self.telmov.get(),self.telfij.get(),self.corE.get(),self.nomcon.get(),
-                    #self.apellcon.get(),self.telcon.get(),self.relcon.get(),self.check_2.get(),
-                    #self.check_3.get(),self.check_4.get(),self.fecUltAct)
-                consulta1="""UPDATE socio SET nombre=?,apellidos=?,fecA=?,fecN=? WHERE id=?"""
-                    #,fecB=?,motB=?,dni=?
-                    #profe=?,deudapen=?,MemberDir=?,CargoMember=?,numsoc=?,estciv=?,discapaci=?,calle=?,
-                    #muni=?,prov=?,pais=?,codpos=?,telmov=?,telfij=?,corE=?,nomcon=?,apellcon=?,telcon=?,
-                    #relcon=?,RGPD=?,WhatsApp=?,ImgOk=?  WHERE id=?"""
-                print("parametro1: ",parametro1)
-                print("consulta1: ",consulta1)    
+                parametro1=[_nombre,_apellidos,_fecA,_fecN,_fecB,_motB,_dni,_profe,_deudapen,
+                    _check_1,_CargoMember,_numsoc,_estciv,_discapaci,_calle,_muni,_prov,_pais,
+                    _codpos,_telmov,_telfij,_corE,_nomcon,_apellcon,_telcon,_relcon,_check_2,
+                    _check_3,_check_4,_fecUltAct,_id,]
+                consulta1="""UPDATE socio SET nombre = ?,apellidos = ?,fecA = ?,
+                            fecN = ?,fecB = ?,motB = ?,dni = ?,profe = ?,deudapen = ?,MemberDir = ?,
+                            CargoMember = ?,numsoc = ?,estciv = ?,discapaci = ?,calle = ?,muni = ?,
+                            prov = ?,pais = ?,codpos = ?,telmov = ?,telfij = ?,corE = ?,nomcon = ?,
+                            apellcon = ?,telcon = ?,relcon = ?,RGPD = ?,WhatsApp = ?,ImgOk = ?,
+                            fecUltAct = ?  WHERE id=?"""
                 with sqlite3.connect("database.db") as conn:
                      cursor=conn.cursor()
                      cursor.execute(consulta1,parametro1)                    
@@ -569,10 +588,11 @@ class Socios(Frame):
                      self.id=-1
             except sqlite3.OperationalError as error:
                     print("Eror en Modificacion BD: ", error)
-        
-        #self.mostrar_campos()
 
-
+#--> Vamos a crear el metodo de listar la informacion de los socios, escogiendo los campos fundamentales.
+#    Realmente no se está listando, sino exportando un fichero, en formato PDF o xlsx.
+    def listar_socios(self):
+        pass
 
     def widgets(self):
         socios=Label(self,text="SOCIOS",bg="greenyellow",font="Arial 18")
@@ -587,6 +607,9 @@ class Socios(Frame):
         self.hoy=(datetime.today().strftime("%Y-%m-%d"))
         self.fecha=IntVar
         self.valido=False
+        self.formato=ttk.Combobox(self,font="16",values=["xlsx","PDF"])
+        self.formato.place(x=900,y=600)
+        self.btnexportar=self.botones(750,600,"LISTADO","blue","white",cmd=self.listar_socios)
 
 #---> vamos a definir todos los campos de entrada de socios.  
 #--> Nombre (nombre)      
@@ -744,13 +767,20 @@ class Socios(Frame):
         onvalue=1,offvalue=0,variable=self.check_4,font="Ariel 12",bg="aquamarine")
         ChkImgOk.place(x=5,y=530,height=25)
 
-#--> Botones de las acciones "ALTA" - "BAJA" - "CONSULTA" - "MODIFICACIONES" - "LISTADO"
-        btnAlSo=self.botones(20,650,"ALTA","blue","white",cmd=self.altasocio)    
-        btnBaSo=self.botones(200,650,"BAJA","blue","white",cmd="")    
-        btnCoSo=self.botones(400,650,"CONSULTA","blue","white",cmd=self.consulta_socio)
-        btnMoSo=self.botones(600,650,"MODIFICACION","blue","white",cmd=self.modifica_socio)        
-        btnlISo=self.botones(800,650,"LISTADO","blue","white",cmd="")
+#--> Botones de las acciones "ALTA" - "CONSULTA" - "MODIFICACIONES/BAJA" - "LISTADO"
+        btnAlSo=self.botones(20,600,"ALTA","blue","white",cmd=self.altasocio)    
+        btnCoSo=self.botones(250,600,"CONSULTA","blue","white",cmd=self.consulta_socio)
+        btnMoSo=self.botones(500,600,"MODIFICACION/BAJA","blue","white",cmd=self.modifica_socio)        
+        
+#==============================================================================================
+#                                        >>  REPORTE - Pertenece a los informes <<
+#==============================================================================================
 
+class Reporte:
+    def __init__(self): 
+        super(Reporte,self).__init__()
+        self.titulo="LISTA DE SOCIOS"
+        self.nombre="INFORME.pdf"
         
 #==============================================================================================
 #                                        >>  ACTIVIDAD <<
@@ -841,14 +871,19 @@ class Proveedor(Frame):
 #    bOTON "REFRESCAR". Se borra el contenido del treview, y se seleccionan todos los registros 
 #    de la BD de proveedor.
     def mostrar(self):
+        colores=("pink1","LightPink1")
+        for color in colores:
+            self.tre.tag_configure(color,background=color)
         result=self.tre.get_children()
         for i in result:
             self.tre.delete(i)
         conn=sqlite3.connect("database.db")
         cursor=conn.cursor()    
-        result=cursor.execute("SELECT * FROM proveedor ORDER BY id DESC")      
-        for elem in result:
-            self.tre.insert("",0,text=elem[0],values=(elem[1],elem[2],elem[3],elem[4],elem[5]))
+        result=cursor.execute("SELECT * FROM proveedor ORDER BY id DESC")  
+        colores=itertools.cycle(colores)   
+        for elem,color in zip(result,colores):
+            self.tre.insert("",0,text=elem[0],tag=("fuente",color),values=(elem[1],elem[2],elem[3],elem[4],elem[5]))
+
 
 #--> Antes de cada alta se borra el contenido del treview, para una vez realizada la alta, seleccionar
 #    todos los registros de la BD de proveedor. Si self.id == -1, es una Alta, sino es una modificacion. 
