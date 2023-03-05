@@ -450,7 +450,9 @@ class Socios(Frame):
 #--> Funcion para CONSULTAR un socio al pulsar el boton "CONSULTA"-------------------------
     def consulta_socio(self):            
             nombre=self.nombre.get()            
-            apellidos=self.apellidos.get()                
+            apellidos=self.apellidos.get()   
+            print("nombre: ",nombre)
+            print("apellidos: ",apellidos)             
             if (nombre=="") and (apellidos==""):            
                messagebox.showwarning(title="CONSULTA SOCIO",message="Rellene los campos >> Nombre y 2 Apellidos << ")
             else:    
@@ -462,6 +464,7 @@ class Socios(Frame):
                     cursor.execute(consulta,parametros)
                     resultado=cursor.fetchone()
                     conn.commit()
+                    print("resultado: ",resultado)
                 except sqlite3.OperationalError as error:
                        print("Eror en Consulta BD: ", error)
                        messagebox.showwarning(title="Error",message="Error en CONSULTA SOCIO") 
@@ -479,31 +482,56 @@ class Socios(Frame):
         self.apellidos.insert(END,resultado[2])
         self.fecA.insert(END,resultado[3])
         self.fecN.insert(END,resultado[4])
-        self.fecB.insert(END,resultado[5])
-        self.motB.insert(END,resultado[6])
-        self.dni.insert(END,resultado[7])
-        self.profe.insert(END,resultado[8])
-        self.deudapen.insert(END,resultado[9])       
-        self.CargoMember.insert(END,resultado[11])
-        self.numsoc.insert(END,resultado[12])
-        self.estciv.insert(END,resultado[13])
-        self.discapaci.insert(END,resultado[14])
-        self.calle.insert(END,resultado[15])
-        self.muni.insert(END,resultado[16])
-        self.prov.insert(END,resultado[17])
-        self.pais.insert(END,resultado[18])
-        self.codpos.insert(END,resultado[19])
-        self.telmov.insert(END,resultado[20])
-        self.telfij.insert(END,resultado[21])
-        self.corE.insert(END,resultado[22])
-        self.nomcon.insert(END,resultado[23])
-        self.apellcon.insert(END,resultado[24])
-        self.telcon.insert(END,resultado[25])
-        self.relcon.insert(END,resultado[26])
-        self.check_1.set(resultado[10])
-        self.check_2.set(resultado[27])
-        self.check_3.set(resultado[28])
-        self.check_4.set(resultado[29])
+        if resultado[5] != None:
+            self.fecB.insert(END,resultado[5])           
+        if resultado[6] != None:       
+            self.motB.insert(END,str(resultado[6]))
+        if resultado[7] != None:    
+            self.dni.insert(END,resultado[7])
+        if resultado[8] != None:    
+            self.profe.insert(END,resultado[8])
+        if resultado[9] != None:    
+            self.deudapen.insert(END,str(resultado[9])) 
+        if resultado[11] != None:          
+            self.CargoMember.insert(END,resultado[11])
+        if resultado[12] != None:    
+            self.numsoc.insert(END,resultado[12])
+        if resultado[13] != None:    
+            self.estciv.insert(END,resultado[13])
+        if resultado[14] != None:    
+            self.discapaci.insert(END,resultado[14])
+        if resultado[15] != None:    
+            self.calle.insert(END,resultado[15])
+        if resultado[16] != None:    
+            self.muni.insert(END,resultado[16])
+        if resultado[17] != None:    
+            self.prov.insert(END,resultado[17])
+        if resultado[18] != None:    
+            self.pais.insert(END,resultado[18])
+        if resultado[19] != None:    
+            self.codpos.insert(END,resultado[19])
+        if resultado[20] != None:    
+            self.telmov.insert(END,resultado[20])
+        if resultado[21] != None:    
+            self.telfij.insert(END,resultado[21])
+        if resultado[22] != None:    
+            self.corE.insert(END,resultado[22])
+        if resultado[23] != None:    
+            self.nomcon.insert(END,resultado[23])
+        if resultado[24] != None:    
+            self.apellcon.insert(END,resultado[24])
+        if resultado[25] != None:    
+            self.telcon.insert(END,resultado[25])
+        if resultado[26] != None:    
+            self.relcon.insert(END,resultado[26])
+        if resultado[10] != None:    
+           self.check_1.set(resultado[10])
+        if resultado[27] != None:   
+            self.check_2.set(resultado[27])
+        if resultado[28] != None:    
+            self.check_3.set(resultado[28])
+        if resultado[29] != None:    
+            self.check_4.set(resultado[29])
         self.fecUltAct=self.hoy
 
 #--> Funcion para MODIFICAR un socio, al pulsar el boton "MODIFICAR", compruebo si self.id==-1, en cuyo 
