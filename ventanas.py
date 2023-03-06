@@ -8,7 +8,7 @@ import cv2
 import imutils
 import sqlite3
 import itertools
-import pandas as pd
+# import pandas as pd
 
 
 #-------------------- clase Login
@@ -456,11 +456,12 @@ class Socios(Frame):
             else:    
                 try:
                   with sqlite3.connect("database.db") as conn:
-                    cursor=conn.cursor()
-                    consulta=("SELECT * FROM socio WHERE nombre=? and apellidos=?")
-                    parametros=(nombre,apellidos)
-                    cursor.execute(consulta,parametros)
-                    resultado=cursor.fetchone()
+                    cursor = conn.cursor()
+                    consulta ='SELECT * FROM socio WHERE nombre = ? and apellidos = ?;'
+                    parametros = (nombre,apellidos,)
+                    cursor.execute(consulta, parametros)
+                    print('Registros encontrados:',cursor.rowcount)
+                    resultado = cursor.fetchone()
                     conn.commit()
                 except sqlite3.OperationalError as error:
                        print("Eror en Consulta BD: ", error)
