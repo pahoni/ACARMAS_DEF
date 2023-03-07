@@ -52,3 +52,18 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS proveedor (
 
 conn.commit
 conn.close    
+
+#--> Creamos la tabla de Apunte  >> Apunte Diario  <<:
+cursor.execute("""CREATE TABLE IF NOT EXISTS apunte (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fecAapu DATE NOT NULL,
+    impDebeapu FLOAT DEFAULT 0,
+    impHaberapu FLOAT DEFAULT 0,
+    conceptoapu VARCHAR(200),
+    userapu VARCHAR(20),
+    numsoc INTEGER DEFAULT 0,
+    saldoapu FLOAT,
+    fecUltActapu DATE NOT NULL)""")
+
+conn.commit
+conn.close    
