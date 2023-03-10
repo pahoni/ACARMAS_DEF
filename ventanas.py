@@ -8,7 +8,7 @@ import cv2
 import imutils
 import sqlite3
 import itertools
-import pandas as pd
+# import pandas as pd
 
 
 #-------------------- clase Login
@@ -456,11 +456,12 @@ class Socios(Frame):
             else:    
                 try:
                   with sqlite3.connect("database.db") as conn:
-                    cursor=conn.cursor()
-                    consulta=("SELECT * FROM socio WHERE nombre=? and apellidos=?")
-                    parametros=(nombre,apellidos)
-                    cursor.execute(consulta,parametros)
-                    resultado=cursor.fetchone()
+                    cursor = conn.cursor()
+                    consulta ='SELECT * FROM socio WHERE nombre = ? and apellidos = ?;'
+                    parametros = (nombre,apellidos,)
+                    cursor.execute(consulta, parametros)
+                    print('Registros encontrados:',cursor.rowcount)
+                    resultado = cursor.fetchone()
                     conn.commit()
 #                    print("resultado: ",resultado)
                 except sqlite3.OperationalError as error:
@@ -480,56 +481,31 @@ class Socios(Frame):
         self.apellidos.insert(END,resultado[2])
         self.fecA.insert(END,resultado[3])
         self.fecN.insert(END,resultado[4])
-        if resultado[5] != None:
-            self.fecB.insert(END,resultado[5])           
-        if resultado[6] != None:       
-            self.motB.insert(END,str(resultado[6]))
-        if resultado[7] != None:    
-            self.dni.insert(END,resultado[7])
-        if resultado[8] != None:    
-            self.profe.insert(END,resultado[8])
-        if resultado[9] != None:    
-            self.deudapen.insert(END,str(resultado[9])) 
-        if resultado[11] != None:          
-            self.CargoMember.insert(END,resultado[11])
-        if resultado[12] != None:    
-            self.numsoc.insert(END,resultado[12])
-        if resultado[13] != None:    
-            self.estciv.insert(END,resultado[13])
-        if resultado[14] != None:    
-            self.discapaci.insert(END,resultado[14])
-        if resultado[15] != None:    
-            self.calle.insert(END,resultado[15])
-        if resultado[16] != None:    
-            self.muni.insert(END,resultado[16])
-        if resultado[17] != None:    
-            self.prov.insert(END,resultado[17])
-        if resultado[18] != None:    
-            self.pais.insert(END,resultado[18])
-        if resultado[19] != None:    
-            self.codpos.insert(END,resultado[19])
-        if resultado[20] != None:    
-            self.telmov.insert(END,resultado[20])
-        if resultado[21] != None:    
-            self.telfij.insert(END,resultado[21])
-        if resultado[22] != None:    
-            self.corE.insert(END,resultado[22])
-        if resultado[23] != None:    
-            self.nomcon.insert(END,resultado[23])
-        if resultado[24] != None:    
-            self.apellcon.insert(END,resultado[24])
-        if resultado[25] != None:    
-            self.telcon.insert(END,resultado[25])
-        if resultado[26] != None:    
-            self.relcon.insert(END,resultado[26])
-        if resultado[10] != None:    
-           self.check_1.set(resultado[10])
-        if resultado[27] != None:   
-            self.check_2.set(resultado[27])
-        if resultado[28] != None:    
-            self.check_3.set(resultado[28])
-        if resultado[29] != None:    
-            self.check_4.set(resultado[29])
+        self.fecB.insert(END,resultado[5])
+        self.motB.insert(END,resultado[6])
+        self.dni.insert(END,resultado[7])
+        self.profe.insert(END,resultado[8])
+        self.deudapen.insert(END,resultado[9])       
+        self.CargoMember.insert(END,resultado[11])
+        self.numsoc.insert(END,resultado[12])
+        self.estciv.insert(END,resultado[13])
+        self.discapaci.insert(END,resultado[14])
+        self.calle.insert(END,resultado[15])
+        self.muni.insert(END,resultado[16])
+        self.prov.insert(END,resultado[17])
+        self.pais.insert(END,resultado[18])
+        self.codpos.insert(END,resultado[19])
+        self.telmov.insert(END,resultado[20])
+        self.telfij.insert(END,resultado[21])
+        self.corE.insert(END,resultado[22])
+        self.nomcon.insert(END,resultado[23])
+        self.apellcon.insert(END,resultado[24])
+        self.telcon.insert(END,resultado[25])
+        self.relcon.insert(END,resultado[26])
+        self.check_1.set(resultado[10])
+        self.check_2.set(resultado[27])
+        self.check_3.set(resultado[28])
+        self.check_4.set(resultado[29])
         self.fecUltAct=self.hoy
 
 #--> Funcion para MODIFICAR un socio, al pulsar el boton "MODIFICAR", compruebo si self.id==-1, en cuyo 
@@ -1124,6 +1100,7 @@ class Proveedor(Frame):
 class Apuntediario(Frame):
     def __init__(self,padre): 
         super().__init__(padre)
+        self.id=-1
         self.widgets()
 
 #--> Le damos un movimiento de color, al paso del mouse/enter por las teclas de los botones
@@ -1156,6 +1133,141 @@ class Apuntediario(Frame):
             return True
         except ValueError:                                
             return False
+
+#--> No uso el metodo "eje_consulta", por ser una select masiva sin parametros. 
+#    bOTON "REFRESCAR". Se borra el contenido del treview, y se seleccionan todos los registros 
+#    de la BD de apuntes.
+    def mostrar(self):
+        colores=("pink1","LightPink1")
+        for color in colores:
+            self.tre.tag_configure(color,background=color)
+        result=self.tre.get_children()
+        for i in result:
+            self.tre.delete(i)
+        conn=sqlite3.connect("database.db")
+        cursor=conn.cursor()    
+        result=cursor.execute("SELECT * FROM apuntes ORDER BY id DESC")  
+        colores=itertools.cycle(colores)   
+        for elem,color in zip(result,colores):
+            self.tre.insert("",0,text=elem[0],tag=("fuente",color),values=(elem[1],elem[2],elem[3],elem[4],elem[5],elem[6]))
+
+
+#--> Antes de cada alta se borra el contenido del treview, para una vez realizada la alta, seleccionar
+#    todos los registros de la BD de apuntes. Si self.id == -1, es una Alta, sino es una modificacion. 
+    def altaapuntes(self):
+        result=self.tre.get_children()
+        for i in result:
+            self.tre.delete(i)
+        _fecAapu=self.fecAapu.get()
+        _impDebeapu=self.impDebeapu.get()
+        _impHaberapu=self.impHaberapu.get()
+        _conceptoapu=self.conceptoapu.get().upper()
+        _numsoc=self.numsoc.get()  
+        if self.id==-1:            
+            #---> Validamos fecha de alta
+            fechv=_fecAapu    
+            if self.valfecha(fechv):
+                try:                
+                    consulta=("""INSERT INTO apuntes VALUES(null,?,?,?,?,?,?,?,?)""")
+                    parametros=(_fecAapu,_impDebeapu,_impHaberapu,_conceptoapu,self.user,_numsoc,self.hoy)
+                    self.eje_consulta(consulta,parametros)                    
+                    messagebox.showinfo(title="Alta apuntes",message="ALTA REALIZADA CON EXITO")
+                except:  
+                    messagebox.showwarning(title="Error",message="Error en Alta de apuntes")
+                else:
+                    messagebox.showerror(title="Fecha ALTA apuntes",message="Fecha debe ser formato AAAA-MM-DD")                
+            else:
+                messagebox.showwarning(title="Error",message="Rellene Fecha de alta")   
+        else:
+            #---> Validamos fecha de alta
+            fechv=_fecAapu    
+            if self.valfecha(fechv):
+                consulta1=f"UPDATE apuntes SET nombrepro=?,cifpro=?,relpro=?,fecApro=?,fecBpro=?,fecUltActpro=? WHERE id={self.id}"
+                parametro1=(_fecAapu,_impDebeapu,_impHaberapu,_conceptoapu,self.hoy)
+                with sqlite3.connect("database.db") as conn:
+                    cursor=conn.cursor()
+                    cursor.execute(consulta1,parametro1)
+                    self.id=-1
+                    conn.commit
+                    messagebox.showinfo(title="Modificacion",message="MODIFICACION REALIZADA CON EXITO")    
+            else:
+                messagebox.showerror(title="Fecha ALTA apunte",message="Fecha debe ser formato AAAA-MM-DD")                
+        self.limpiar()
+        self.mostrar()
+
+    def limpiar(self):
+        self.fecAapu.delete(0,END)
+        self.impDebeapu.delete(0,END)
+        self.impHaberapu.delete("1.0",END)
+        self.conceptoapu.delete(0,END)
+        self.numsoc.delete(0,END)
+        self.saldoapu.delete(0,END)   
+
+    def seleccionar(self):
+        self.btn_actualizar("disable")
+        self.btn_cancelar("normal")
+        self.btn_agregar("normal")
+        self.btn_eliminar("disable")
+        self.btn_refrescar("disable")           
+        id=self.tre.item(self.tre.selection())["text"]
+        if id=="":
+            messagebox.showerror(title="ACTUALIZAR",message="Error, Seleccione un Apunter")
+        else:
+            self.id=id
+            self.limpiar()
+            valor=self.tre.item(self.tre.selection())["values"]
+            self.fecAapu.insert(0,valor[0])
+            self.impDebeapu.insert(0,valor[1])
+            self.impHaberapu.insert(0,valor[2])
+            self.conceptoapu.insert(0,valor[3])
+            self.numsoc.insert(0,valor[4])
+            self.saldoapu.insert(0,valor[5])
+
+#--> Funcion para eliminar un proveedor. Se borra el registro
+    def eliminar(self):
+        id=self.tre.item(self.tre.selection())["text"]
+        valor=messagebox.askquestion(title="Eliminar",message="¿Esta seguro de querer eliminar al proveedor?")
+        if valor=="yes":
+            consulta="DELETE FROM apuntes WHERE id=?"
+            parametros=(id,)
+            self.eje_consulta(consulta,parametros)
+        #self.mostrar()     
+        self.btn_agregar("normal")
+        self.btn_refrescar("normal")
+        self.btn_actualizar("disable")
+        self.btn_cancelar("disable")
+        self.btn_eliminar("disable")           
+
+#--> Funcion que limpia los campos.
+    def cancelar(self):
+        self.limpiar()
+
+#--> Control de los eventos de los botones, activandolos o desactivandolos
+    def evento1(self,event):
+        self.btn_actualizar("normal")
+        self.btn_eliminar("normal")
+        self.btn_agregar("disable")
+        self.btn_refrescar("disable")           
+    def evento2(self,event):
+        self.btn_actualizar("disable")
+        self.btn_eliminar("disable")
+        self.btn_agregar("normal")
+        self.btn_refrescar("normal") 
+        self.btn_cancelar("disable")          
+               
+#--> Definicion generica del estado de los botones
+    def btn_agregar(self,estado):
+        self.btnagregar.configure(state=estado)
+    def btn_refrescar(self,estado):
+        self.btnrefrescar.configure(state=estado)    
+    def btn_actualizar(self,estado):
+        self.btnactualizar.configure(state=estado)    
+    def btn_eliminar(self,estado):
+        self.btneliminar.configure(state=estado)    
+    def btn_cancelar(self,estado):
+        self.btncancelar.configure(state=estado)    
+        self.limpiar()
+
 
 
     def widgets(self):
@@ -1226,32 +1338,34 @@ class Apuntediario(Frame):
 #    Usuario de sesion que hace el apunte(userapu) [5], Numero de socio (numsoc) [6],
 #    Saldo diario de apuntes(saldoapu) [7], Fecha ultima actualizacion(fecUltActpro) [8]  
         treFrame=Frame(self.frame,bg="cyan")
-        treFrame.place(x=280,y=30,width=860,height=600)
+        treFrame.place(x=30,y=100,width=1000,height=500)
         scroll=Scrollbar(treFrame)
         scroll.pack(side=RIGHT,fill=Y)
-        self.tre=ttk.Treeview(treFrame,yscrollcommand=scroll.set,height=40,columns=("#0","#1","#2","#3","#4","#5"))
+        self.tre=ttk.Treeview(treFrame,yscrollcommand=scroll.set,height=40,columns=("#0","#1","#2","#3","#4","#5","#6"))
         self.tre.pack() 
         scroll.config(command=self.tre.yview)
         colors=("cyan","green")
         for color in colors:
             self.tre.tag_configure(color,background=color)
-        for i in [2,4,5]:
-            self.tre.column(f"#{i}",width=80,anchor=CENTER)
-        self.tre.column("#1",width=270,anchor=CENTER)
-        self.tre.column("#3",width=250,anchor=CENTER)
-        self.tre.column("#0",width=60,anchor=CENTER)      
+        for i in [2,3,6]:
+            self.tre.column(f"#{i}",width=150,anchor=CENTER)
+        self.tre.column("#0",width=60,anchor=CENTER)
+        self.tre.column("#1",width=100,anchor=CENTER)
+        self.tre.column("#4",width=250,anchor=CENTER)
+        self.tre.column("#5",width=80,anchor=CENTER)      
         self.tre.heading("#0",text="CODIGO",anchor=CENTER)
-        self.tre.heading("#1",text="NOMBRE",anchor=CENTER)
-        self.tre.heading("#2",text="C.I.F.",anchor=CENTER)
-        self.tre.heading("#3",text="RELACION",anchor=CENTER)
-        self.tre.heading("#4",text="FECHA ALTA",anchor=CENTER)
-        self.tre.heading("#5",text="FECHA BAJA",anchor=CENTER)
+        self.tre.heading("#1",text="FECHA ALTA",anchor=CENTER)
+        self.tre.heading("#5",text="Nº SOCIO",anchor=CENTER)
+        self.tre.heading("#2",text="IMPORTE ENTRADA",anchor=CENTER)
+        self.tre.heading("#3",text="IMPORTE SALIDA",anchor=CENTER)
+        self.tre.heading("#4",text="CONCEPTO",anchor=CENTER)        
+        self.tre.heading("#6",text="SALDO DIARIO",anchor=CENTER)
         try:
             self.mostrar()
         except:
             pass
-        self.tre.bind("<Double-1>",self.evento1)
-        self.tre.bind("<Button-1>",self.evento2)    
+       # self.tre.bind("<Double-1>",self.evento1)
+       # self.tre.bind("<Button-1>",self.evento2)    
 
 
 #==============================================================================================
