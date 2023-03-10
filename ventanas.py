@@ -22,7 +22,7 @@ class Login(Frame):
         self.place(x=0,y=0,width=1200,height=800)
         self.controlador=controlador
         self.widgets()
-        self.imagen()
+        self.imagen()      
 
 #--> Definimos la funcion para representar una imagen en la pantalla de logon
     def imagen(self):
@@ -60,10 +60,12 @@ class Login(Frame):
 #--> Hacemos una select contra la BD usuarios para comprobas si existe el usuario y su contraseña, y 
 #    validamos que rellene los campos.
     def login(self):
+        global usuario
         with sqlite3.connect("database.db") as conn:
             cursor=conn.cursor()
             user=self.username.get()
             pas=self.password.get()
+            usuario=self.username
             if self.validacion(user,pas):                
                 consulta="SELECT*FROM usuarios WHERE name=? and password=?"
                 parametros=(user,pas)
@@ -109,11 +111,13 @@ class Login(Frame):
         self.password.place(x=540,y=450,width=240,height=40)
         btn=self.botones(540,520,"INICIAR SESION","blue","white",cmd=self.login)
         btn1=self.botones(700,520,"REGISTRAR USUARIO","blue","white",cmd=self.control2)
+        
        
 
 #------------------------  clase Registro
 #--> Vamos a crear una clase llamada Registro, donde se creará un frame que contenga
-#    el usuario y la contraseña para caso de ser validos se darán de alta al usuario y contraseña.
+#    el usuario y la contraseña del Administrador, para caso de ser validos se darán de alta 
+#    al usuario y contraseña.
 class Registro(Frame):
     image=None
     def __init__(self,padre,controlador):
@@ -225,7 +229,7 @@ class Container(Frame):
         self.frames={}
 #--> Iteramos con una instruccion "for", tanto a Socios, Actividad, Proveedor, Apunte diario y Recibo,
 #     para que la primera pantalla que se activa es la de Socios.        
-        for i in (Socios,Actividad,Proveedor,Apuntediario,Recibo):
+        for i in (Socios,Actividad,Participes,Apuntediario,Proveedor):
             frame=i(self)
             self.frames[i]=frame
             frame.pack()
@@ -255,9 +259,9 @@ class Container(Frame):
     def widgets(self):
         socios=self.botones(0,0,"GESTION SOCIOS","blue","white",cmd=self.socios)               
         actividad=self.botones(240,0,"GESTION ACTIVIDAD","blue","white",cmd=self.actividad)
-        proveedor=self.botones(480,0,"PROVEEDORES","blue","white",cmd=self.proveedor)
+        participes=self.botones(480,0,"PARTICIPES","blue","white",cmd=self.participes)
         apuntediario=self.botones(720,0,"APUNTE DIARIO","blue","white",cmd=self.apuntediario)
-        recibo=self.botones(960,0,"RECIBO","blue","white",cmd=self.recibo)
+        proveedor=self.botones(900,0,"PROVEEDORES","blue","white",cmd=self.proveedor)
 
 
 #--> Creamos una funcion show_frames para almacenar los diferentes frames
@@ -273,16 +277,17 @@ class Container(Frame):
     def actividad(self):
         self.show_frames(Actividad)        
 
-    def proveedor(self):
-        self.show_frames(Proveedor)        
+    def participes(self):
+        self.show_frames(Participes)        
 
     def apuntediario(self):
         self.show_frames(Apuntediario)        
 
-    def recibo(self):
-        self.show_frames(Recibo)        
+    def proveedor(self):
+        self.show_frames(Proveedor)        
 
-#--> Creamos las clases, de Socios, de Actividad, de Proveedor, de Apuntediario y de Recibo.
+
+#--> Creamos las clases, de Socios, de Actividad, de Participes, de Apuntediario y de Proveedor, 
 #==============================================================================================
 #                                        >>  SOCIOS <<
 #==============================================================================================
@@ -292,8 +297,7 @@ class Socios(Frame):
         super().__init__(padre)
         self.widgets()
         self.id=-1
-        self.recuperar_numso()
-        
+        self.recuperar_numso()       
 
 #--> Le damos un movimiento de color, al paso del mouse/enter por las teclas de los botones
     def botones(self,x,y,text,bcolor,fcolor,cmd):
@@ -315,7 +319,9 @@ class Socios(Frame):
         btn.bind("<Leave>",on_leave)
         btn.place(x=x,y=y,width=200,height=40)    
   
-#--> Funcion para realizar instrucciones sobre la BD y recuperar el ultimo numero de socio y mostrarlo.
+#--> Funcion para realizar instrucciones sobre la BD y recuperar el ultimo numero de socio y 
+#    mostrarlo, el superior a 9000 que son no-socios y socios-honorarios. 
+#    Falta recuperar el ultimo menor a 5000
     def recuperar_numso(self):
         with sqlite3.connect("database.db") as conn:
             cursor=conn.cursor()
@@ -775,7 +781,7 @@ class Socios(Frame):
         btnMoSo=self.botones(500,600,"MODIFICACION/BAJA","blue","white",cmd=self.modifica_socio)        
         
 #==============================================================================================
-#                                        >>  REPORTE - Pertenece a los informes <<
+#                    >>  REPORTE - Pertenece a los informes de Socios <<
 #==============================================================================================
 
 class Reporte:
@@ -817,12 +823,327 @@ class Actividad(Frame):
         pass
 
     def widgets(self):
-        actividad=Label(self,text="GESTION DE ACTIVIDADES",bg="#33CBFF",font="Arial 18")
+        actividad=Label(self,text="ACTIVIDADES",bg="#33CBFF",font="Arial 18")
         actividad.pack()
         actividad.place(x=0,y=0,height=30,width=1200)
         self.frame=Frame(self,bg="#9ACDD7",bd=15,relief="groove")   
         self.frame.place(x=0,y=30,width=1200,height=800) 
 
+#==============================================================================================
+#                                        >>  PARTICIPES <<
+#==============================================================================================
+
+class Participes(Frame):
+    def __init__(self,padre): 
+        super().__init__(padre)
+        self.widgets()
+
+#--> Le damos un movimiento de color, al paso del mouse/enter por las teclas de los botones
+    def botones(self,x,y,text,bcolor,fcolor,cmd):
+        def on_enter(e):
+            btn["background"]=bcolor
+            btn["foreground"]=fcolor
+        def on_leave(e):
+            btn["background"]=fcolor
+            btn["foreground"]=bcolor
+        btn=Button(self,text=text,
+        fg=bcolor,
+        bg=fcolor,
+        border=1,
+        activeforeground=fcolor,
+        activebackground=bcolor,
+        command=cmd)
+        btn.bind("<Enter>",on_enter)
+        btn.bind("<Leave>",on_leave)
+        btn.place(x=x,y=y,width=240,height=40)    
+
+    def widgets(self):
+        recibo=Label(self,text="ACTIVIDAD - PARTICIPES",bg="#E2C5E0",font="Arial 18")
+        recibo.pack()
+        recibo.place(x=0,y=0,height=30,width=1200)
+        self.frame=Frame(self,bg="#E2C5E0",bd=15,relief="groove")   
+        self.frame.place(x=0,y=30,width=1200,height=800) 
+
+
+#==============================================================================================
+#                                 >>  APUNTES / DIARIO <<
+#==============================================================================================
+
+class Apuntediario(Frame):
+    def __init__(self,padre): 
+        super().__init__(padre)
+        self.id=-1
+        self.widgets()
+
+#--> Le damos un movimiento de color, al paso del mouse/enter por las teclas de los botones
+    def botones(self,x,y,text,bcolor,fcolor,cmd):
+        def on_enter(e):
+            btn["background"]=bcolor
+            btn["foreground"]=fcolor
+        def on_leave(e):
+            btn["background"]=fcolor
+            btn["foreground"]=bcolor
+        btn=Button(self,text=text,
+        fg=bcolor,
+        bg=fcolor,
+        border=1,
+        activeforeground=fcolor,
+        activebackground=bcolor,
+        command=cmd)
+        btn.bind("<Enter>",on_enter)
+        btn.bind("<Leave>",on_leave)
+        btn.place(x=x,y=y,width=150,height=40)    
+        return btn
+
+    def eje_consulta(self,consulta,parametros=()):
+        db=Datos()       
+        result=db.consultas(consulta,parametros)
+        return result
+
+    def valfecha(self,fechv):
+        try:              
+            fechv=datetime.strptime(fechv,'%Y-%m-%d').date()            
+            return True
+        except ValueError:                                
+            return False
+
+    def validacion(self,_fecAapu,_impDebeapu,_impHaberapu):
+        return len(_fecAapu)>0 and (len(_impDebeapu)>0 or  len(_impHaberapu)>0) 
+
+#--> No uso el metodo "eje_consulta", por ser una select masiva sin parametros. 
+#    bOTON "REFRESCAR". Se borra el contenido del treview, y se seleccionan todos los registros 
+#    de la BD de apuntes.
+    def mostrar(self):
+        colores=("pink1","LightPink1")
+        for color in colores:
+            self.tre.tag_configure(color,background=color)
+        result=self.tre.get_children()
+        for i in result:
+            self.tre.delete(i)
+        conn=sqlite3.connect("database.db")
+        cursor=conn.cursor()    
+        result=cursor.execute("SELECT * FROM apunte ORDER BY id DESC")  
+        colores=itertools.cycle(colores)   
+        for elem,color in zip(result,colores):
+            self.tre.insert("",0,text=elem[0],tag=("fuente",color),values=(elem[1],elem[2],elem[3],elem[4],elem[5],elem[6]))
+
+    def recuperar_saldo(self):
+        with sqlite3.connect("database.db") as conn:
+            cursor=conn.cursor()
+            cursor.execute("SELECT saldoapu FROM apunte ORDER BY id DESC LIMIT 1")
+            resultado=cursor.fetchone()
+            if resultado is NONE:
+                messagebox.showwarning(title="Error",message="NO EXISTE REGISTROS EN apuntes diarios") 
+            else:    
+                self.saldoFinal.delete(0,END)
+                self.saldoFinal.insert(END,resultado[0])
+                print("resultado:",resultado)
+            conn.commit()
+
+
+#--> Antes de cada alta se borra el contenido del treview, para una vez realizada la alta, seleccionar
+#    todos los registros de la BD de apuntes. Si self.id == -1, es una Alta, sino es una modificacion. 
+    def altaapuntes(self):
+        result=self.tre.get_children()
+        for i in result:
+            self.tre.delete(i)
+        _fecAapu=self.fecAapu.get()
+        _impDebeapu=self.impDebeapu.get()
+        _impHaberapu=self.impHaberapu.get()
+        _conceptoapu=self.conceptoapu.get().upper()
+        _numsoc=self.numsoc.get() 
+
+        if self.id==-1:  
+            #--> Validamos fecha de alta y un importe como minimo. 
+            if self.validacion(_fecAapu,_impDebeapu,_impHaberapu):         
+            #---> Validamos fecha de alta
+                fechv=_fecAapu    
+                if self.valfecha(fechv):
+                    #self.recuperar_saldo()
+                    #self.saldoFinal=self.saldoFinal+(_impDebeapu-_impHaberapu)
+                    try:                
+                        consulta=("""INSERT INTO apunte VALUES(null,?,?,?,?,?,?,?,?)""")
+                        parametros=(_fecAapu,_numsoc,_impDebeapu,_impHaberapu,
+                                _conceptoapu,float(_impDebeapu)-float(_impHaberapu),usuario,self.hoy)
+                        self.eje_consulta(consulta,parametros)                    
+                        messagebox.showinfo(title="Alta apuntes",message="ALTA REALIZADA CON EXITO")
+                    except:  
+                        messagebox.showwarning(title="Error",message="Error en Alta de apuntes")
+                else:
+                    messagebox.showerror(title="Fecha ALTA apuntes",message="Fecha debe ser formato AAAA-MM-DD")                
+            else:
+                messagebox.showwarning(title="Error",message="Rellene Fecha de alta y un importe")   
+        else:
+            #---> Validamos fecha de alta
+            fechv=_fecAapu    
+            if self.valfecha(fechv):
+                #self.saldoFinal=self.saldoFinal+(_impDebeapu-_impHaberapu)
+                consulta1=f"UPDATE apunte SET fecAapu=?,numsoc=?,impDebeapu=?,imphaberapu=?,conceptoapu=?,saldoapu=?,userapu=?,fecUltActapu=? WHERE id={self.id}"
+                parametro1=(_fecAapu,_numsoc,_impDebeapu,_impHaberapu,
+                            _conceptoapu,float(_impDebeapu)-float(_impHaberapu),usuario,self.hoy)
+                with sqlite3.connect("database.db") as conn:
+                    cursor=conn.cursor()
+                    cursor.execute(consulta1,parametro1)
+                    self.id=-1
+                    conn.commit
+                    messagebox.showinfo(title="Modificacion",message="MODIFICACION REALIZADA CON EXITO")    
+            else:
+                messagebox.showerror(title="Fecha ALTA apunte",message="Fecha debe ser formato AAAA-MM-DD")                
+        self.limpiar()
+        self.mostrar()
+
+    def limpiar(self):
+        self.fecAapu.delete(0,END)
+        self.impDebeapu.delete(0,END)
+        self.impHaberapu.delete("1.0",END)
+        self.conceptoapu.delete(0,END)
+        self.numsoc.delete(0,END)
+        self.saldoapu.delete(0,END)   
+
+    def seleccionar(self):
+        self.btn_actualizar("disable")
+        self.btn_cancelar("normal")
+        self.btn_agregar("normal")
+        self.btn_eliminar("disable")
+        self.btn_refrescar("disable")           
+        id=self.tre.item(self.tre.selection())["text"]
+        if id=="":
+            messagebox.showerror(title="ACTUALIZAR",message="Error, Seleccione un Apunter")
+        else:
+            self.id=id
+            self.limpiar()
+            valor=self.tre.item(self.tre.selection())["values"]
+            self.fecAapu.insert(0,valor[0])
+            self.impDebeapu.insert(0,valor[1])
+            self.impHaberapu.insert(0,valor[2])
+            self.conceptoapu.insert(0,valor[3])
+            self.numsoc.insert(0,valor[4])
+            self.saldoapu.insert(0,valor[5])
+
+#--> Funcion que limpia los campos.
+    def cancelar(self):
+        self.limpiar()
+
+#--> Control de los eventos de los botones, activandolos o desactivandolos
+    def evento1(self,event):
+        self.btn_actualizar("normal")
+        self.btn_agregar("disable")
+        self.btn_refrescar("disable")           
+    def evento2(self,event):
+        self.btn_actualizar("disable")
+        self.btn_agregar("normal")
+        self.btn_refrescar("normal") 
+        self.btn_cancelar("disable")          
+               
+#--> Definicion generica del estado de los botones
+    def btn_agregar(self,estado):
+        self.btnagregar.configure(state=estado)
+    def btn_refrescar(self,estado):
+        self.btnrefrescar.configure(state=estado)    
+    def btn_actualizar(self,estado):
+        self.btnactualizar.configure(state=estado)    
+    def btn_cancelar(self,estado):
+        self.btncancelar.configure(state=estado)    
+        self.limpiar()
+
+    def widgets(self):
+        apuntediario=Label(self,text="APUNTES - DIARIO",bg="yellow",font="Arial 18")
+        apuntediario.pack()
+        apuntediario.place(x=0,y=0,height=30,width=1200)
+        self.frame=Frame(self,bg="#DADB7F",bd=15,relief="groove")   
+        self.frame.place(x=0,y=30,width=1200,height=800) 
+        self.hoy=(datetime.today().strftime("%Y-%m-%d"))
+        self.saldoFinal=0
+
+#---> vamos a definir todos los campos de entrada de los Apuntes Diario.  
+#--> Fecha de alta del apunte (fecAapu)      
+        lblfecAapu=Label(self.frame,text="Fecha alta:",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblfecAapu.place(x=10,y=15)
+        self.fecAapu=Entry(self.frame,width=10,relief="raised",font="Ariel 13")
+        self.fecAapu.place(x=100,y=15,height=25)
+
+#--> Importe Debe del apunte - entrada (impDebeapu)      
+        lblimpDebeapu=Label(self.frame,text="Importe entrada (D)",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblimpDebeapu.place(x=215,y=15)
+        self.impDebeapu=Entry(self.frame,width=10,relief="raised",font="Ariel 13")
+        self.impDebeapu.place(x=360,y=15,height=25)
+        lbleuroD=Label(self.frame,text="€",font="Ariel 14",bg="aquamarine",relief="sunken")
+        lbleuroD.place(x=455,y=15)
+
+#--> Importe Haber del apunte - salida (impHaberapu)      
+        lblimpHaberapu=Label(self.frame,text="Importe salida (H)",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblimpHaberapu.place(x=490,y=15)
+        self.impHaberapu=Entry(self.frame,width=10,relief="raised",font="Ariel 13")
+        self.impHaberapu.place(x=625,y=15,height=25)
+        lbleuroH=Label(self.frame,text="€",font="Ariel 14",bg="aquamarine",relief="sunken")
+        lbleuroH.place(x=720,y=15)
+
+#--> Concepto del apunte (conceptoapu)      
+        lblconceptoapu=Label(self.frame,text="Concepto",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblconceptoapu.place(x=760,y=15)
+        self.conceptoapu=Entry(self.frame,width=30,relief="raised",font="Ariel 13")
+        self.conceptoapu.place(x=845,y=15,height=25)
+
+#--> Numero de Socio (numsoc)      
+        lblnumsoc=Label(self.frame,text="Nº. Socio",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblnumsoc.place(x=10,y=45)
+        self.numsoc=Entry(self.frame,width=7,relief="raised",font="Ariel 13")
+        self.numsoc.place(x=90,y=45,height=25)
+
+#--> Saldo diario (saldoapu)      
+        lblsaldoapu=Label(self.frame,text="Saldo Diario",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblsaldoapu.place(x=190,y=45)
+        self.saldoapu=Entry(self.frame,width=10,relief="raised",font="Ariel 13",state=DISABLED)
+        self.saldoapu.place(x=295,y=45,height=25)
+        lbleuroT=Label(self.frame,text="€",font="Ariel 14",bg="aquamarine",relief="sunken")
+        lbleuroT.place(x=390,y=45)
+
+#--> Botones de  "ALTA", "REFRESCAR" "MODIFICACION", "ELIMINAR" y  "CANCELAR" de Apuntes 
+        self.btnagregar=self.botones(20,650,"ALTA APUNTE","blue","white",cmd=self.altaapuntes)
+        self.btnrefrescar=self.botones(250,650,"REFRESCAR","blue","white",cmd=self.mostrar)
+        self.btnactualizar=self.botones(480,650,"ACTUALIZAR","blue","white",cmd=self.seleccionar) 
+        self.btnactualizar.configure(state="disable")
+        self.btncancelar=self.botones(940,650,"CANCELAR","blue","white",cmd=self.cancelar) 
+        self.btncancelar.configure(state="disable")   
+
+#--> Creo ahora el Treframe con su Treeview con sus cabeceras de columnas (Heading) 
+
+#    Codigo(id) [0], Fecha de alta del apunte(fecAapu) [1], Importe de entrada Debe(impDebeapu) [2], 
+#    Importe de salida Haber(impHaberapu) [3], Concepto del apunte(conceptoapu) [4], 
+#    Usuario de sesion que hace el apunte(userapu) [5], Numero de socio (numsoc) [6],
+#    Saldo diario de apuntes(saldoapu) [7], Fecha ultima actualizacion(fecUltActpro) [8]  
+        treFrame=Frame(self.frame,bg="cyan")
+        treFrame.place(x=30,y=100,width=1000,height=500)
+        scroll=Scrollbar(treFrame)
+        scroll.pack(side=RIGHT,fill=Y)
+        self.tre=ttk.Treeview(treFrame,yscrollcommand=scroll.set,height=40,columns=("#0","#1","#2","#3","#4","#5","#6"))
+        self.tre.pack() 
+        scroll.config(command=self.tre.yview)
+        for i in [2,3,6]:
+            self.tre.column(f"#{i}",width=150,anchor=CENTER)
+        colors=("cyan","green")
+        for color in colors:
+            self.tre.tag_configure(color,background=color)
+        self.tre.column("#0",width=60,anchor=CENTER)
+        self.tre.column("#1",width=100,anchor=CENTER)
+        self.tre.column("#4",width=310,anchor=CENTER)
+        self.tre.column("#5",width=80,anchor=CENTER)      
+        self.tre.heading("#0",text="CODIGO",anchor=CENTER)
+        self.tre.heading("#1",text="FECHA ALTA",anchor=CENTER)
+        self.tre.heading("#5",text="Nº SOCIO",anchor=CENTER)
+        self.tre.heading("#2",text="IMPORTE ENTRADA",anchor=CENTER)
+        self.tre.heading("#3",text="IMPORTE SALIDA",anchor=CENTER)
+        self.tre.heading("#4",text="CONCEPTO",anchor=CENTER)        
+        self.tre.heading("#6",text="SALDO DIARIO",anchor=CENTER)
+        try:
+            self.mostrar()
+        except:
+            pass
+        self.tre.bind("<Double-1>",self.evento1)
+        self.tre.bind("<Button-1>",self.evento2)    
+
+
+    
 #==============================================================================================
 #                                        >>  PROVEEDOR <<
 #==============================================================================================
@@ -1091,317 +1412,5 @@ class Proveedor(Frame):
         self.tre.bind("<Double-1>",self.evento1)
         self.tre.bind("<Button-1>",self.evento2)    
 
-
-
-#==============================================================================================
-#                                 >>  APUNTES / DIARIO <<
-#==============================================================================================
-
-class Apuntediario(Frame):
-    def __init__(self,padre): 
-        super().__init__(padre)
-        self.id=-1
-        self.widgets()
-
-#--> Le damos un movimiento de color, al paso del mouse/enter por las teclas de los botones
-    def botones(self,x,y,text,bcolor,fcolor,cmd):
-        def on_enter(e):
-            btn["background"]=bcolor
-            btn["foreground"]=fcolor
-        def on_leave(e):
-            btn["background"]=fcolor
-            btn["foreground"]=bcolor
-        btn=Button(self,text=text,
-        fg=bcolor,
-        bg=fcolor,
-        border=1,
-        activeforeground=fcolor,
-        activebackground=bcolor,
-        command=cmd)
-        btn.bind("<Enter>",on_enter)
-        btn.bind("<Leave>",on_leave)
-        btn.place(x=x,y=y,width=200,height=40)    
-
-    def eje_consulta(self,consulta,parametros=()):
-        db=Datos()       
-        result=db.consultas(consulta,parametros)
-        return result
-
-    def valfecha(self,fechv):
-        try:              
-            fechv=datetime.strptime(fechv,'%Y-%m-%d').date()            
-            return True
-        except ValueError:                                
-            return False
-
-#--> No uso el metodo "eje_consulta", por ser una select masiva sin parametros. 
-#    bOTON "REFRESCAR". Se borra el contenido del treview, y se seleccionan todos los registros 
-#    de la BD de apuntes.
-    def mostrar(self):
-        colores=("pink1","LightPink1")
-        for color in colores:
-            self.tre.tag_configure(color,background=color)
-        result=self.tre.get_children()
-        for i in result:
-            self.tre.delete(i)
-        conn=sqlite3.connect("database.db")
-        cursor=conn.cursor()    
-        result=cursor.execute("SELECT * FROM apuntes ORDER BY id DESC")  
-        colores=itertools.cycle(colores)   
-        for elem,color in zip(result,colores):
-            self.tre.insert("",0,text=elem[0],tag=("fuente",color),values=(elem[1],elem[2],elem[3],elem[4],elem[5],elem[6]))
-
-
-#--> Antes de cada alta se borra el contenido del treview, para una vez realizada la alta, seleccionar
-#    todos los registros de la BD de apuntes. Si self.id == -1, es una Alta, sino es una modificacion. 
-    def altaapuntes(self):
-        result=self.tre.get_children()
-        for i in result:
-            self.tre.delete(i)
-        _fecAapu=self.fecAapu.get()
-        _impDebeapu=self.impDebeapu.get()
-        _impHaberapu=self.impHaberapu.get()
-        _conceptoapu=self.conceptoapu.get().upper()
-        _numsoc=self.numsoc.get()  
-        if self.id==-1:            
-            #---> Validamos fecha de alta
-            fechv=_fecAapu    
-            if self.valfecha(fechv):
-                try:                
-                    consulta=("""INSERT INTO apuntes VALUES(null,?,?,?,?,?,?,?,?)""")
-                    parametros=(_fecAapu,_impDebeapu,_impHaberapu,_conceptoapu,self.user,_numsoc,self.hoy)
-                    self.eje_consulta(consulta,parametros)                    
-                    messagebox.showinfo(title="Alta apuntes",message="ALTA REALIZADA CON EXITO")
-                except:  
-                    messagebox.showwarning(title="Error",message="Error en Alta de apuntes")
-                else:
-                    messagebox.showerror(title="Fecha ALTA apuntes",message="Fecha debe ser formato AAAA-MM-DD")                
-            else:
-                messagebox.showwarning(title="Error",message="Rellene Fecha de alta")   
-        else:
-            #---> Validamos fecha de alta
-            fechv=_fecAapu    
-            if self.valfecha(fechv):
-                consulta1=f"UPDATE apuntes SET nombrepro=?,cifpro=?,relpro=?,fecApro=?,fecBpro=?,fecUltActpro=? WHERE id={self.id}"
-                parametro1=(_fecAapu,_impDebeapu,_impHaberapu,_conceptoapu,self.hoy)
-                with sqlite3.connect("database.db") as conn:
-                    cursor=conn.cursor()
-                    cursor.execute(consulta1,parametro1)
-                    self.id=-1
-                    conn.commit
-                    messagebox.showinfo(title="Modificacion",message="MODIFICACION REALIZADA CON EXITO")    
-            else:
-                messagebox.showerror(title="Fecha ALTA apunte",message="Fecha debe ser formato AAAA-MM-DD")                
-        self.limpiar()
-        self.mostrar()
-
-    def limpiar(self):
-        self.fecAapu.delete(0,END)
-        self.impDebeapu.delete(0,END)
-        self.impHaberapu.delete("1.0",END)
-        self.conceptoapu.delete(0,END)
-        self.numsoc.delete(0,END)
-        self.saldoapu.delete(0,END)   
-
-    def seleccionar(self):
-        self.btn_actualizar("disable")
-        self.btn_cancelar("normal")
-        self.btn_agregar("normal")
-        self.btn_eliminar("disable")
-        self.btn_refrescar("disable")           
-        id=self.tre.item(self.tre.selection())["text"]
-        if id=="":
-            messagebox.showerror(title="ACTUALIZAR",message="Error, Seleccione un Apunter")
-        else:
-            self.id=id
-            self.limpiar()
-            valor=self.tre.item(self.tre.selection())["values"]
-            self.fecAapu.insert(0,valor[0])
-            self.impDebeapu.insert(0,valor[1])
-            self.impHaberapu.insert(0,valor[2])
-            self.conceptoapu.insert(0,valor[3])
-            self.numsoc.insert(0,valor[4])
-            self.saldoapu.insert(0,valor[5])
-
-#--> Funcion para eliminar un proveedor. Se borra el registro
-    def eliminar(self):
-        id=self.tre.item(self.tre.selection())["text"]
-        valor=messagebox.askquestion(title="Eliminar",message="¿Esta seguro de querer eliminar al proveedor?")
-        if valor=="yes":
-            consulta="DELETE FROM apuntes WHERE id=?"
-            parametros=(id,)
-            self.eje_consulta(consulta,parametros)
-        #self.mostrar()     
-        self.btn_agregar("normal")
-        self.btn_refrescar("normal")
-        self.btn_actualizar("disable")
-        self.btn_cancelar("disable")
-        self.btn_eliminar("disable")           
-
-#--> Funcion que limpia los campos.
-    def cancelar(self):
-        self.limpiar()
-
-#--> Control de los eventos de los botones, activandolos o desactivandolos
-    def evento1(self,event):
-        self.btn_actualizar("normal")
-        self.btn_eliminar("normal")
-        self.btn_agregar("disable")
-        self.btn_refrescar("disable")           
-    def evento2(self,event):
-        self.btn_actualizar("disable")
-        self.btn_eliminar("disable")
-        self.btn_agregar("normal")
-        self.btn_refrescar("normal") 
-        self.btn_cancelar("disable")          
-               
-#--> Definicion generica del estado de los botones
-    def btn_agregar(self,estado):
-        self.btnagregar.configure(state=estado)
-    def btn_refrescar(self,estado):
-        self.btnrefrescar.configure(state=estado)    
-    def btn_actualizar(self,estado):
-        self.btnactualizar.configure(state=estado)    
-    def btn_eliminar(self,estado):
-        self.btneliminar.configure(state=estado)    
-    def btn_cancelar(self,estado):
-        self.btncancelar.configure(state=estado)    
-        self.limpiar()
-
-
-
-    def widgets(self):
-        apuntediario=Label(self,text="APUNTES - DIARIO",bg="yellow",font="Arial 18")
-        apuntediario.pack()
-        apuntediario.place(x=0,y=0,height=30,width=1200)
-        self.frame=Frame(self,bg="#DADB7F",bd=15,relief="groove")   
-        self.frame.place(x=0,y=30,width=1200,height=800) 
-        self.hoy=(datetime.today().strftime("%Y-%m-%d"))
-
-#---> vamos a definir todos los campos de entrada de los Apuntes Diario.  
-#--> Fecha de alta del apunte (fecAapu)      
-        lblfecAapu=Label(self.frame,text="Fecha alta:",font="Ariel 12",bg="aquamarine",relief="sunken")
-        lblfecAapu.place(x=10,y=15)
-        self.fecAapu=Entry(self.frame,width=10,relief="raised",font="Ariel 13")
-        self.fecAapu.place(x=100,y=15,height=25)
-
-#--> Importe Debe del apunte - entrada (impDebeapu)      
-        lblimpDebeapu=Label(self.frame,text="Importe entrada (D)",font="Ariel 12",bg="aquamarine",relief="sunken")
-        lblimpDebeapu.place(x=215,y=15)
-        self.impDebeapu=Entry(self.frame,width=10,relief="raised",font="Ariel 13")
-        self.impDebeapu.place(x=360,y=15,height=25)
-        lbleuroD=Label(self.frame,text="€",font="Ariel 14",bg="aquamarine",relief="sunken")
-        lbleuroD.place(x=455,y=15)
-
-#--> Importe Haber del apunte - salida (impHaberapu)      
-        lblimpHaberapu=Label(self.frame,text="Importe salida (H)",font="Ariel 12",bg="aquamarine",relief="sunken")
-        lblimpHaberapu.place(x=490,y=15)
-        self.impHaberapu=Entry(self.frame,width=10,relief="raised",font="Ariel 13")
-        self.impHaberapu.place(x=625,y=15,height=25)
-        lbleuroH=Label(self.frame,text="€",font="Ariel 14",bg="aquamarine",relief="sunken")
-        lbleuroH.place(x=720,y=15)
-
-#--> Concepto del apunte (conceptoapu)      
-        lblconceptoapu=Label(self.frame,text="Concepto",font="Ariel 12",bg="aquamarine",relief="sunken")
-        lblconceptoapu.place(x=760,y=15)
-        self.conceptoapu=Entry(self.frame,width=30,relief="raised",font="Ariel 13")
-        self.conceptoapu.place(x=845,y=15,height=25)
-
-#--> Numero de Socio (numsoc)      
-        lblnumsoc=Label(self.frame,text="Nº. Socio",font="Ariel 12",bg="aquamarine",relief="sunken")
-        lblnumsoc.place(x=10,y=45)
-        self.numsoc=Entry(self.frame,width=7,relief="raised",font="Ariel 13")
-        self.numsoc.place(x=90,y=45,height=25)
-
-#--> Saldo diario (saldoapu)      
-        lblsaldoapu=Label(self.frame,text="Saldo Diario",font="Ariel 12",bg="aquamarine",relief="sunken")
-        lblsaldoapu.place(x=190,y=45)
-        self.saldoapu=Entry(self.frame,width=10,relief="raised",font="Ariel 13")
-        self.saldoapu.place(x=295,y=45,height=25)
-        lbleuroT=Label(self.frame,text="€",font="Ariel 14",bg="aquamarine",relief="sunken")
-        lbleuroT.place(x=390,y=45)
-
-#--> Botones de  "ALTA", "REFRESCAR" "MODIFICACION", "ELIMINAR" y  "CANCELAR" de Apuntes 
-        self.btnagregar=self.botones(20,650,"ALTA APUNTE","blue","white",cmd="")#self.altaapunte)
-        self.btnrefrescar=self.botones(250,650,"REFRESCAR","blue","white",cmd="")#self.mostrar)
-        self.btnactualizar=self.botones(480,650,"ACTUALIZAR","blue","white",cmd="")#self.seleccionar) 
-        #self.btnactualizar.configure(state="disable")              
-        self.btneliminar=self.botones(710,650,"BAJA APUNTE","blue","white",cmd="")#self.eliminar)
-        #self.btneliminar.configure(state="disable")        
-        self.btncancelar=self.botones(940,650,"CANCELAR","blue","white",cmd="")#self.cancelar) 
-        #self.btncancelar.configure(state="disable")   
-
-#--> Creo ahora el Treframe con su Treeview con sus cabeceras de columnas (Heading) 
-
-#    Codigo(id) [0], Fecha de alta del apunte(fecAapu) [1], Importe de entrada Debe(impDebeapu) [2], 
-#    Importe de salida Haber(impHaberapu) [3], Concepto del apunte(conceptoapu) [4], 
-#    Usuario de sesion que hace el apunte(userapu) [5], Numero de socio (numsoc) [6],
-#    Saldo diario de apuntes(saldoapu) [7], Fecha ultima actualizacion(fecUltActpro) [8]  
-        treFrame=Frame(self.frame,bg="cyan")
-        treFrame.place(x=30,y=100,width=1000,height=500)
-        scroll=Scrollbar(treFrame)
-        scroll.pack(side=RIGHT,fill=Y)
-        self.tre=ttk.Treeview(treFrame,yscrollcommand=scroll.set,height=40,columns=("#0","#1","#2","#3","#4","#5","#6"))
-        self.tre.pack() 
-        scroll.config(command=self.tre.yview)
-        colors=("cyan","green")
-        for color in colors:
-            self.tre.tag_configure(color,background=color)
-        for i in [2,3,6]:
-            self.tre.column(f"#{i}",width=150,anchor=CENTER)
-        self.tre.column("#0",width=60,anchor=CENTER)
-        self.tre.column("#1",width=100,anchor=CENTER)
-        self.tre.column("#4",width=250,anchor=CENTER)
-        self.tre.column("#5",width=80,anchor=CENTER)      
-        self.tre.heading("#0",text="CODIGO",anchor=CENTER)
-        self.tre.heading("#1",text="FECHA ALTA",anchor=CENTER)
-        self.tre.heading("#5",text="Nº SOCIO",anchor=CENTER)
-        self.tre.heading("#2",text="IMPORTE ENTRADA",anchor=CENTER)
-        self.tre.heading("#3",text="IMPORTE SALIDA",anchor=CENTER)
-        self.tre.heading("#4",text="CONCEPTO",anchor=CENTER)        
-        self.tre.heading("#6",text="SALDO DIARIO",anchor=CENTER)
-        try:
-            self.mostrar()
-        except:
-            pass
-       # self.tre.bind("<Double-1>",self.evento1)
-       # self.tre.bind("<Button-1>",self.evento2)    
-
-
-#==============================================================================================
-#                                        >>  RECIBO <<
-#==============================================================================================
-
-class Recibo(Frame):
-    def __init__(self,padre): 
-        super().__init__(padre)
-        self.widgets()
-
-#--> Le damos un movimiento de color, al paso del mouse/enter por las teclas de los botones
-    def botones(self,x,y,text,bcolor,fcolor,cmd):
-        def on_enter(e):
-            btn["background"]=bcolor
-            btn["foreground"]=fcolor
-        def on_leave(e):
-            btn["background"]=fcolor
-            btn["foreground"]=bcolor
-        btn=Button(self,text=text,
-        fg=bcolor,
-        bg=fcolor,
-        border=1,
-        activeforeground=fcolor,
-        activebackground=bcolor,
-        command=cmd)
-        btn.bind("<Enter>",on_enter)
-        btn.bind("<Leave>",on_leave)
-        btn.place(x=x,y=y,width=240,height=40)    
-
-    def widgets(self):
-        recibo=Label(self,text="RECIBO",bg="#E2C5E0",font="Arial 18")
-        recibo.pack()
-        recibo.place(x=0,y=0,height=30,width=1200)
-        self.frame=Frame(self,bg="#E2C5E0",bd=15,relief="groove")   
-        self.frame.place(x=0,y=30,width=1200,height=800) 
-    
 
     

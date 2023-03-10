@@ -49,7 +49,6 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS proveedor (
     fecApro DATE,   
     fecBpro DATE,
     fecUltActpro DATE NOT NULL)""")
-
 conn.commit
 conn.close    
 
@@ -57,13 +56,12 @@ conn.close
 cursor.execute("""CREATE TABLE IF NOT EXISTS apunte (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     fecAapu DATE NOT NULL,
-    impDebeapu FLOAT DEFAULT 0,
-    impHaberapu FLOAT DEFAULT 0,
-    conceptoapu VARCHAR(200),
-    userapu VARCHAR(20),
     numsoc INTEGER DEFAULT 0,
-    saldoapu FLOAT,
+    impDebeapu REAL DEFAULT 0,
+    impHaberapu REAL DEFAULT 0,
+    conceptoapu VARCHAR(200),        
+    saldoapu REAL,
+    userapu VARCHAR(20),
     fecUltActapu DATE NOT NULL)""")
-
 conn.commit
 conn.close    
