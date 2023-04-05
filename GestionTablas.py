@@ -56,11 +56,10 @@ conn.close
 cursor.execute("""CREATE TABLE IF NOT EXISTS apunte (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     fecAapu DATE NOT NULL,
-    numsoc INTEGER DEFAULT 0,
+    conceptoapu VARCHAR(200),
     impDebeapu REAL DEFAULT 0,
-    impHaberapu REAL DEFAULT 0,
-    conceptoapu VARCHAR(200),        
-    saldoapu REAL,
+    impHaberapu REAL DEFAULT 0,    
+    saldoToapu REAL,
     userapu VARCHAR(20),
     fecUltActapu DATE NOT NULL)""")
 conn.commit

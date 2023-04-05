@@ -52,7 +52,7 @@ class Login(Frame):
         command=cmd)
         btn.bind("<Enter>",on_enter)
         btn.bind("<Leave>",on_leave)
-        btn.place(x=x,y=y,width=120,height=30)
+        btn.place(x=x,y=y,width=120,height=50)
 
     def validacion(self,user,pas):
         return len(user)>0 and len(pas)>0    
@@ -65,7 +65,7 @@ class Login(Frame):
             cursor=conn.cursor()
             user=self.username.get()
             pas=self.password.get()
-            usuario=self.username
+            usuario=user
             if self.validacion(user,pas):                
                 consulta="SELECT*FROM usuarios WHERE name=? and password=?"
                 parametros=(user,pas)
@@ -94,13 +94,11 @@ class Login(Frame):
 #--> Definimos la funcion widgest, que contendrá el frame de usuario/contraseña con sus entry's
 #    y botones de registrarse o conectarse.        
     def widgets(self):
-        fondo=Frame(self,bg="cyan")
+        fondo=Frame(self,bg="cyan",bd=15,relief="groove")
         fondo.pack
         fondo.place(x=0,y=0,width=1200,height=800)
         self.perfil=Label(fondo)
         self.perfil.place(x=540,y=150)
-        user=Label(fondo,text="Nombre de Usuario",font="Arial 16",bg="cyan")
-        user.place(x=540,y=370) 
         user=Label(fondo,text="Nombre de Usuario",font="Arial 16",bg="cyan")
         user.place(x=540,y=320)
         self.username=Entry(fondo,font="Arial 16")
@@ -194,7 +192,7 @@ class Registro(Frame):
 
 #--> Vamos a crear una funcion que comprende los widgest y crear un frame llamado "fondo"
     def widgest(self):
-        self.fondo=Frame(self,bg="cyan")
+        self.fondo=Frame(self,bg="#33FFDD",bd=15,relief="groove")
         self.fondo.pack()
         self.fondo.place(x=0,y=0,width=1200,height=800)
         self.perfil=Label(self.fondo)
@@ -218,7 +216,7 @@ class Registro(Frame):
 
 #--------------> clase Container  <----------------------------------------------------------------
 #--> Vamos a crear el contenedor, con su controlador, y sus botones para "Gestion Socios" y
-#     "Gestion Actividades","Proveedores", "Caja" y "Varios".
+#     "Gestion Actividades","Apunte Diario" y "Proveedores", .
 class Container(Frame):
     def __init__(self,padre,controlador):
         super().__init__(padre)
@@ -227,9 +225,9 @@ class Container(Frame):
         self.place(x=0,y=0,width=1200,height=800) 
         self.widgets()
         self.frames={}
-#--> Iteramos con una instruccion "for", tanto a Socios, Actividad, Proveedor, Apunte diario y Recibo,
+#--> Iteramos con una instruccion "for", tanto a Socios, Actividad, Apunte diario y Proveedor.
 #     para que la primera pantalla que se activa es la de Socios.        
-        for i in (Socios,Actividad,Participes,Apuntediario,Proveedor):
+        for i in (Socios,Actividad,Apuntediario,Proveedor):
             frame=i(self)
             self.frames[i]=frame
             frame.pack()
@@ -238,6 +236,7 @@ class Container(Frame):
         self.show_frames(Socios)  
 
 #--> Le damos un movimiento de color, al paso del mouse/enter por las teclas de los botones
+#    Ajustamos las cuatro pantallas al ancho de la pantalla principal
     def botones(self,x,y,text,bcolor,fcolor,cmd):
         def on_enter(e):
             btn["background"]=bcolor
@@ -254,13 +253,12 @@ class Container(Frame):
         command=cmd)
         btn.bind("<Enter>",on_enter)
         btn.bind("<Leave>",on_leave)
-        btn.place(x=x,y=y,width=240,height=40)  
+        btn.place(x=x,y=y,width=300,height=40)  
 
     def widgets(self):
         socios=self.botones(0,0,"GESTION SOCIOS","blue","white",cmd=self.socios)               
-        actividad=self.botones(240,0,"GESTION ACTIVIDAD","blue","white",cmd=self.actividad)
-        participes=self.botones(480,0,"PARTICIPES","blue","white",cmd=self.participes)
-        apuntediario=self.botones(720,0,"APUNTE DIARIO","blue","white",cmd=self.apuntediario)
+        actividad=self.botones(300,0,"GESTION ACTIVIDADES","blue","white",cmd=self.actividad)
+        apuntediario=self.botones(600,0,"APUNTE DIARIO","blue","white",cmd=self.apuntediario)
         proveedor=self.botones(900,0,"PROVEEDORES","blue","white",cmd=self.proveedor)
 
 
@@ -277,17 +275,13 @@ class Container(Frame):
     def actividad(self):
         self.show_frames(Actividad)        
 
-    def participes(self):
-        self.show_frames(Participes)        
-
     def apuntediario(self):
         self.show_frames(Apuntediario)        
 
     def proveedor(self):
         self.show_frames(Proveedor)        
 
-
-#--> Creamos las clases, de Socios, de Actividad, de Participes, de Apuntediario y de Proveedor, 
+#--> Creamos las clases, de Socios, de Actividad, de Apuntediario y de Proveedor, 
 #==============================================================================================
 #                                        >>  SOCIOS <<
 #==============================================================================================
@@ -322,19 +316,57 @@ class Socios(Frame):
 #--> Funcion para realizar instrucciones sobre la BD y recuperar el ultimo numero de socio y 
 #    mostrarlo, el superior a 9000 que son no-socios y socios-honorarios. 
 #    Falta recuperar el ultimo menor a 5000
+
     def recuperar_numso(self):
         with sqlite3.connect("database.db") as conn:
             cursor=conn.cursor()
-            cursor.execute("SELECT numsoc FROM socio ORDER BY numsoc DESC LIMIT 1")
+            cursor.execute("SELECT numsoc FROM socio WHERE numsoc < 5000 ORDER BY numsoc DESC LIMIT 1")
             resultado=cursor.fetchone()
-            if resultado is NONE:
+            if resultado is None:
                 messagebox.showwarning(title="Error",message="NO EXISTE REGISTROS EN socio") 
             else:    
                 self.ultnumsoc.delete(0,END)
                 self.ultnumsoc.insert(END,resultado[0])
             conn.commit()
             #self.ultnumsoc=Entry(state="readonly")
+        with sqlite3.connect("database.db") as conn:
+            cursor=conn.cursor()
+            cursor.execute("SELECT numsoc FROM socio WHERE numsoc > 5000 ORDER BY numsoc DESC LIMIT 1")
+            resultado=cursor.fetchone()
+            if resultado is None:
+                messagebox.showwarning(title="Error",message="NO EXISTE REGISTROS EN socio") 
+            else:    
+                self.ultnumNosoc.delete(0,END)
+                self.ultnumNosoc.insert(END,resultado[0])
+            conn.commit()            
 
+#--> Funcion para Habilitar/Deshabilitar los campos de entrada - DE MOMENTO NO SE USA
+    def habilitar_campos(self,estado):
+        self.nombre.configure(state=estado)
+        self.apellidos.configure(state=estado)
+        self.fecA.configure(state=estado)
+        self.fecN.configure(state=estado)
+        self.fecB.configure(state=estado)
+        self.motB.configure(state=estado)
+        self.dni.configure(state=estado)
+        self.profe.configure(state=estado)
+        self.deudapen.configure(state=estado)
+        self.CargoMember.configure(state=estado)
+        self.numsoc.configure(state=estado)
+        self.estciv.configure(state=estado)
+        self.discapaci.configure(state=estado)
+        self.calle.configure(state=estado)
+        self.muni.configure(state=estado)
+        self.prov.configure(state=estado)
+        self.pais.configure(state=estado)
+        self.codpos.configure(state=estado)
+        self.telmov.configure(state=estado)
+        self.telfij.configure(state=estado)
+        self.corE.configure(state=estado)
+        self.nomcon.configure(state=estado)
+        self.apellcon.configure(state=estado)
+        self.telcon.configure(state=estado)
+        self.relcon.configure(state=estado)
 
 #--> Funcion para realizar instrucciones sobre la BD
     def eje_consulta(self,consulta,parametros=()):
@@ -379,21 +411,36 @@ class Socios(Frame):
 
 #--> Funcion para validar campos de entrada minimos
     def validacion_entrada(self,nombre,apellidos,fecA,numsoc):
-        return len(nombre)>0 and len(apellidos)>0 and len(fecA)>0 and len(numsoc)>0        
-   
+        if len(nombre) > 0 and len(apellidos) > 0 and len(fecA) > 0 and numsoc > 0: 
+           return True
+
+#--> Funcion para validar la fecha de entrada (obligatoria)        
     def valfecha(self,fechv):
         try:              
             fechv=datetime.strptime(fechv,'%Y-%m-%d').date()            
             return True
         except ValueError:                                
             return False
-
+        
+#--> Funcion para validar que el campo de entrada sea numerico (numero de socio)
     def valida_numero(self,numero):
-        return  numero.isdecimal()
+        numero = int(numero)
+        if numero < 1:
+            return False  
+        else:     
+            return True 
+        
+#--> Funcion para Cancelar una operacion
+    def cancelar_operacion(self):
+        res = messagebox.askquestion(title="Cancelar",message="Esta seguro que desea cancelar la operacion actual?")
+        if res == messagebox.YES:
+            self.limpiar_campos()
+
 
 #--> Funcion de dar de alta un socio al pulsar el boton "ALTA SOCIO"-------------------------
     def altasocio(self):
-#---> Recogemos los datos introducidos por el usuario        
+#---> Recogemos los datos introducidos por el usuario   
+        self.nombre.focus()
         nombre=self.nombre.get().upper()
         apellidos=self.apellidos.get().upper()
         fecA=self.fecA.get()
@@ -405,14 +452,14 @@ class Socios(Frame):
         deudapen=self.deudapen.get()
         check_1=self.check_1.get()
         CargoMember=self.CargoMember.get().upper()
-        numsoc=self.numsoc.get()
+        numsoc=self.numsoc.get().isnumeric()
         estciv=self.estciv.get().upper()
         discapaci=self.discapaci.get()
         calle=self.calle.get()
         muni=self.muni.get().upper()
         prov=self.prov.get().upper()
         pais=self.pais.get().upper()
-        codpos=self.codpos.get()
+        codpos=self.codpos.get().isnumeric()
         telmov=self.telmov.get()
         telfij=self.telfij.get()
         corE=self.corE.get()
@@ -425,89 +472,106 @@ class Socios(Frame):
         check_4=self.check_4.get()
 
 #---> Compruebo si  los datos minimos de entrada han sido RELLENADOS
-        if self.validacion_entrada(nombre,apellidos,fecA,numsoc):            
 #---> Validamos fecha de alta
-            fechv=fecA                    
-            if self.valfecha(fechv):  
-#---> Validamos que el numero de socio, sea numerico                              
-                numero=numsoc
-                if self.valida_numero(numero):
-                    try:
-                        consulta=("""INSERT INTO socio VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""")                                            
-                        parametros=(nombre,apellidos,fecA,fecN,fecB,motB,dni,profe,deudapen,
-                                    check_1,CargoMember,numsoc,estciv,discapaci,calle,muni,prov,
-                                    pais,codpos,telmov,telfij,corE,nomcon,apellcon,telcon,relcon,
-                                    check_2,check_3,check_4,self.hoy)
+#---> Validamos que el numero de socio, sea numerico  
 
-                        self.eje_consulta(consulta,parametros)
-                        messagebox.showinfo(title="ALTA SOCIO",message="Alta Socio realizado con exito")                   
-                        self.limpiar_campos()
-                                       
-                    except sqlite3.OperationalError as error:
-                           print("Eror en Alta BD: ", error)
-                           messagebox.showwarning(title="Error",message="ERROR AL DAR DE ALTA SOCIO") 
-                else:
-                    messagebox.showerror(title="ALTA SOCIO",message="Numero de socio debe ser Numerico")
+        if self.validacion_entrada(nombre,apellidos,fecA,numsoc):          
+          fechv=fecA                    
+          if self.valfecha(fechv):       
+            numero=numsoc
+            if self.valida_numero(numero):
+                try:
+                    consulta=("""INSERT INTO socio VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""")                                            
+                    parametros=(nombre,apellidos,fecA,fecN,fecB,motB,dni,profe,deudapen,
+                                check_1,CargoMember,numsoc,estciv,discapaci,calle,muni,prov,
+                                pais,codpos,telmov,telfij,corE,nomcon,apellcon,telcon,relcon,
+                                check_2,check_3,check_4,self.hoy)
+                    self.eje_consulta(consulta,parametros)
+                    messagebox.showinfo(title="ALTA SOCIO",message="Alta Socio realizado con exito")                   
+                    self.limpiar_campos()                                       
+                except sqlite3.OperationalError as error:
+                    print("Eror en Alta BD: ", error)
+                    messagebox.showwarning(title="Error",message="ERROR AL DAR DE ALTA SOCIO") 
             else:
+                    messagebox.showerror(title="ALTA SOCIO",message="La informacion solo debe ser numerica")
+          else:
                 messagebox.showerror(title="FECHA ALTA",message="Fecha debe ser formato AAAA-MM-DD")
         else:
             messagebox.showwarning(title="ALTA SOCIO",message="Rellene los campos,Nombre,Apellidos,Fecha Alta y nº Socio")
 
 #--> Funcion para CONSULTAR un socio al pulsar el boton "CONSULTA"-------------------------
     def consulta_socio(self):            
-            nombre=self.nombre.get().upper()            
-            apellidos=self.apellidos.get().upper()   
-            if (nombre=="") and (apellidos==""):            
-               messagebox.showwarning(title="CONSULTA SOCIO",message="Rellene los campos >> Nombre y 2 Apellidos << ")
-            else:    
-                try:
-                  with sqlite3.connect("database.db") as conn:
-                    cursor = conn.cursor()
-                    consulta ='SELECT * FROM socio WHERE nombre = ? and apellidos = ?;'
-                    parametros = (nombre,apellidos,)
-                    cursor.execute(consulta, parametros)
-                    print('Registros encontrados:',cursor.rowcount)
-                    resultado = cursor.fetchone()
-                    conn.commit()
-#                    print("resultado: ",resultado)
-                except sqlite3.OperationalError as error:
-                       print("Eror en Consulta BD: ", error)
-                       messagebox.showwarning(title="Error",message="Error en CONSULTA SOCIO") 
+        nombre=self.nombre.get().upper()            
+        apellidos=self.apellidos.get().upper()   
+        if (nombre=="") and (apellidos==""):            
+            messagebox.showwarning(title="CONSULTA SOCIO",message="Rellene los campos >> Nombre y 2 Apellidos << ")
+        else:    
+            try:
+                with sqlite3.connect("database.db") as conn:
+                 cursor = conn.cursor()
+                 consulta ='SELECT * FROM socio WHERE nombre = ? and apellidos = ?;'
+                 parametros = (nombre,apellidos,)
+                 cursor.execute(consulta, parametros)
+                 resultado = cursor.fetchone()
+                 conn.commit()
+            except sqlite3.OperationalError as error:
+                    print("Eror en Consulta BD: ", error)
+                    messagebox.showwarning(title="Error",message="Error en CONSULTA SOCIO") 
 
-                if resultado is None:
-                    self.nombre.delete(0,END)
-                    self.apellidos.delete(0,END)
-                    messagebox.showinfo(title="CONSULTA",message="Socio no existe")                 
-                else:
-                    self.mostrar_campos(resultado)
+            if resultado is None:
+                self.nombre.delete(0,END)
+                self.apellidos.delete(0,END)
+                messagebox.showinfo(title="CONSULTA",message="Socio no existe")                 
+            else:
+                self.limpiar_campos()
+                self.mostrar_campos(resultado)
 
+#--> Se controla los campos NULL de la BD, para evitar errores
     def mostrar_campos(self,resultado):
         self.id=resultado[0]
         self.nombre.insert(END,resultado[1])
         self.apellidos.insert(END,resultado[2])
         self.fecA.insert(END,resultado[3])
-        self.fecN.insert(END,resultado[4])
-        self.fecB.insert(END,resultado[5])
-        self.motB.insert(END,resultado[6])
+        if resultado[4] != None:
+           self.fecN.insert(END,resultado[4])
+        if resultado[5] != None:
+           self.fecB.insert(END,resultado[5])
+        if resultado[6] != None:   
+           self.motB.insert(END,resultado[6])
         self.dni.insert(END,resultado[7])
-        self.profe.insert(END,resultado[8])
+        if resultado[8] != None:        
+           self.profe.insert(END,resultado[8])
         self.deudapen.insert(END,resultado[9])       
-        self.CargoMember.insert(END,resultado[11])
+        if resultado[11] != None:        
+           self.CargoMember.insert(END,resultado[11])
         self.numsoc.insert(END,resultado[12])
-        self.estciv.insert(END,resultado[13])
+        if resultado[13] != None:        
+           self.estciv.insert(END,resultado[13])
         self.discapaci.insert(END,resultado[14])
-        self.calle.insert(END,resultado[15])
-        self.muni.insert(END,resultado[16])
-        self.prov.insert(END,resultado[17])
-        self.pais.insert(END,resultado[18])
-        self.codpos.insert(END,resultado[19])
-        self.telmov.insert(END,resultado[20])
-        self.telfij.insert(END,resultado[21])
-        self.corE.insert(END,resultado[22])
-        self.nomcon.insert(END,resultado[23])
-        self.apellcon.insert(END,resultado[24])
-        self.telcon.insert(END,resultado[25])
-        self.relcon.insert(END,resultado[26])
+        if resultado[15] != None:        
+           self.calle.insert(END,resultado[15])
+        if resultado[16] != None:        
+           self.muni.insert(END,resultado[16])
+        if resultado[17] != None:        
+           self.prov.insert(END,resultado[17])
+        if resultado[18] != None:           
+           self.pais.insert(END,resultado[18])
+        if resultado[19] != None:        
+           self.codpos.insert(END,resultado[19])
+        if resultado[20] != None:        
+           self.telmov.insert(END,resultado[20])
+        if resultado[21] != None:           
+           self.telfij.insert(END,resultado[21])
+        if resultado[22] != None:           
+           self.corE.insert(END,resultado[22])
+        if resultado[23] != None:           
+           self.nomcon.insert(END,resultado[23])
+        if resultado[24] != None:        
+           self.apellcon.insert(END,resultado[24])
+        if resultado[25] != None:        
+           self.telcon.insert(END,resultado[25])
+        if resultado[26] != None:        
+           self.relcon.insert(END,resultado[26])
         self.check_1.set(resultado[10])
         self.check_2.set(resultado[27])
         self.check_3.set(resultado[28])
@@ -544,7 +608,7 @@ class Socios(Frame):
                     self.mostrar_campos(resultado)
                     messagebox.showinfo(title="Modificacion",message="Haga las modificaciones y pulse MODIFICACION")     
                     _id=resultado[0]
-        else:
+        else:    
             _nombre=self.nombre.get().upper()
             _apellidos=self.apellidos.get().upper()
             _fecA=self.fecA.get()
@@ -586,7 +650,7 @@ class Socios(Frame):
                             CargoMember = ?,numsoc = ?,estciv = ?,discapaci = ?,calle = ?,muni = ?,
                             prov = ?,pais = ?,codpos = ?,telmov = ?,telfij = ?,corE = ?,nomcon = ?,
                             apellcon = ?,telcon = ?,relcon = ?,RGPD = ?,WhatsApp = ?,ImgOk = ?,
-                            fecUltAct = ?  WHERE id=?"""
+                            fecUltAct = ?  WHERE id = ?"""
                 with sqlite3.connect("database.db") as conn:
                      cursor=conn.cursor()
                      cursor.execute(consulta1,parametro1)                    
@@ -602,6 +666,7 @@ class Socios(Frame):
     def listar_socios(self):
         pass
 
+#--> Creamos los widgets y variables para Socios.
     def widgets(self):
         socios=Label(self,text="SOCIOS",bg="greenyellow",font="Arial 18")
         socios.pack()
@@ -616,8 +681,8 @@ class Socios(Frame):
         self.fecha=IntVar
         self.valido=False
         self.formato=ttk.Combobox(self,font="16",values=["xlsx","PDF"])
-        self.formato.place(x=900,y=600)
-        self.btnexportar=self.botones(750,600,"LISTADO","blue","white",cmd=self.listar_socios)
+        self.formato.place(x=755,y=665)
+        self.btnexportar=self.botones(740,580,"LISTADO","blue","white",cmd=self.listar_socios)
 
 #---> vamos a definir todos los campos de entrada de socios.  
 #--> Nombre (nombre)      
@@ -698,6 +763,11 @@ class Socios(Frame):
         lblultnumsoc.place(x=5,y=220)
         self.ultnumsoc=Entry(self.frame,width=7,relief="raised",font="Ariel 13",bg="greenyellow")
         self.ultnumsoc.place(x=130,y=220,height=25)      
+#--> Voy a crear un texto y un entry para reflejar el ultimo numero de No-socio.
+        lblultnumNosoc=Label(self.frame,text="Ultimo nº No-socio:",font="Ariel 12",bg="greenyellow",relief="sunken")
+        lblultnumNosoc.place(x=530,y=220)
+        self.ultnumNosoc=Entry(self.frame,width=7,relief="raised",font="Ariel 13",bg="greenyellow")
+        self.ultnumNosoc.place(x=680,y=220,height=25)     
 
 #--> DIRECCION
 #--> Calle (calle-Numero-Piso-Letra-Escalera) 
@@ -776,10 +846,11 @@ class Socios(Frame):
         ChkImgOk.place(x=5,y=530,height=25)
 
 #--> Botones de las acciones "ALTA" - "CONSULTA" - "MODIFICACIONES/BAJA" 
-        btnAlSo=self.botones(20,600,"ALTA","blue","white",cmd=self.altasocio)    
-        btnCoSo=self.botones(250,600,"CONSULTA","blue","white",cmd=self.consulta_socio)
-        btnMoSo=self.botones(500,600,"MODIFICACION/BAJA","blue","white",cmd=self.modifica_socio)        
-        
+        btnAlSo=self.botones(20,580,"ALTA","blue","white",cmd=self.altasocio)    
+        btnCoSo=self.botones(250,580,"CONSULTA","blue","white",cmd=self.consulta_socio)
+        btnMoSo=self.botones(500,580,"MODIFICACION/BAJA","blue","white",cmd=self.modifica_socio)        
+        btnCancelar=self.botones(950,580,"CANCELAR","blue","red",cmd=self.cancelar_operacion)
+
 #==============================================================================================
 #                    >>  REPORTE - Pertenece a los informes de Socios <<
 #==============================================================================================
@@ -829,41 +900,6 @@ class Actividad(Frame):
         self.frame=Frame(self,bg="#9ACDD7",bd=15,relief="groove")   
         self.frame.place(x=0,y=30,width=1200,height=800) 
 
-#==============================================================================================
-#                                        >>  PARTICIPES <<
-#==============================================================================================
-
-class Participes(Frame):
-    def __init__(self,padre): 
-        super().__init__(padre)
-        self.widgets()
-
-#--> Le damos un movimiento de color, al paso del mouse/enter por las teclas de los botones
-    def botones(self,x,y,text,bcolor,fcolor,cmd):
-        def on_enter(e):
-            btn["background"]=bcolor
-            btn["foreground"]=fcolor
-        def on_leave(e):
-            btn["background"]=fcolor
-            btn["foreground"]=bcolor
-        btn=Button(self,text=text,
-        fg=bcolor,
-        bg=fcolor,
-        border=1,
-        activeforeground=fcolor,
-        activebackground=bcolor,
-        command=cmd)
-        btn.bind("<Enter>",on_enter)
-        btn.bind("<Leave>",on_leave)
-        btn.place(x=x,y=y,width=240,height=40)    
-
-    def widgets(self):
-        recibo=Label(self,text="ACTIVIDAD - PARTICIPES",bg="#E2C5E0",font="Arial 18")
-        recibo.pack()
-        recibo.place(x=0,y=0,height=30,width=1200)
-        self.frame=Frame(self,bg="#E2C5E0",bd=15,relief="groove")   
-        self.frame.place(x=0,y=30,width=1200,height=800) 
-
 
 #==============================================================================================
 #                                 >>  APUNTES / DIARIO <<
@@ -895,21 +931,44 @@ class Apuntediario(Frame):
         btn.place(x=x,y=y,width=150,height=40)    
         return btn
 
+#--> Funcion para recuperar el Saldo Total (suma de todos los importes de impDebeapu, restando
+#    la suma de todos los importes de impHaberapu)
+    def recuperar_saldo(self):
+        with sqlite3.connect("database.db") as conn:
+            cursor=conn.cursor()
+            cursor.execute("SELECT sum(impDebeapu-impHaberapu)  FROM apunte ORDER BY id DESC")
+            resultado=cursor.fetchone()
+            if resultado is None:
+                messagebox.showwarning(title="Error",message="NO EXISTE REGISTROS EN apuntes diarios") 
+            else:   
+                self.saldoFinal=resultado[0]
+                self.saldoToapu.delete(0,END)
+                self.saldoToapu.insert(END,resultado[0])
+        conn.commit()
+
+#--> Funcion para validar fecha de entrada.
+    def valfecha(self,fechv):
+        if fechv == ' ':
+            return False
+        else:
+            try:              
+                fechv=datetime.strptime(fechv,'%Y-%m-%d').date()            
+                return True
+            except ValueError:                                
+                return False
+
+#--> Funcion acceso a Base de Datos
     def eje_consulta(self,consulta,parametros=()):
         db=Datos()       
         result=db.consultas(consulta,parametros)
         return result
 
-    def valfecha(self,fechv):
-        try:              
-            fechv=datetime.strptime(fechv,'%Y-%m-%d').date()            
-            return True
-        except ValueError:                                
-            return False
-
-    def validacion(self,_fecAapu,_impDebeapu,_impHaberapu):
-        return len(_fecAapu)>0 and (len(_impDebeapu)>0 or  len(_impHaberapu)>0) 
-
+#--> Funcion para validar campos de entrada minimos
+    def validacion(self,_fecAapu,_conceptoapu,_impDebeapu,_impHaberapu):
+        
+        if len(_fecAapu) > 0 and len(_conceptoapu) > 0 and (_impDebeapu != False or _impHaberapu != False):
+          return True
+        
 #--> No uso el metodo "eje_consulta", por ser una select masiva sin parametros. 
 #    bOTON "REFRESCAR". Se borra el contenido del treview, y se seleccionan todos los registros 
 #    de la BD de apuntes.
@@ -925,81 +984,69 @@ class Apuntediario(Frame):
         result=cursor.execute("SELECT * FROM apunte ORDER BY id DESC")  
         colores=itertools.cycle(colores)   
         for elem,color in zip(result,colores):
-            self.tre.insert("",0,text=elem[0],tag=("fuente",color),values=(elem[1],elem[2],elem[3],elem[4],elem[5],elem[6]))
-
-    def recuperar_saldo(self):
-        with sqlite3.connect("database.db") as conn:
-            cursor=conn.cursor()
-            cursor.execute("SELECT saldoapu FROM apunte ORDER BY id DESC LIMIT 1")
-            resultado=cursor.fetchone()
-            if resultado is NONE:
-                messagebox.showwarning(title="Error",message="NO EXISTE REGISTROS EN apuntes diarios") 
-            else:    
-                self.saldoFinal.delete(0,END)
-                self.saldoFinal.insert(END,resultado[0])
-                print("resultado:",resultado)
-            conn.commit()
-
+            self.tre.insert("",0,text=elem[0],tag=("fuente",color),values=(elem[1],elem[2],elem[3],elem[4]))
+        if len(self.tre.get_children()) > 0:
+            self.tre.selection_set(self.tre.get_children()[0])   
 
 #--> Antes de cada alta se borra el contenido del treview, para una vez realizada la alta, seleccionar
 #    todos los registros de la BD de apuntes. Si self.id == -1, es una Alta, sino es una modificacion. 
     def altaapuntes(self):
-        result=self.tre.get_children()
-        for i in result:
-            self.tre.delete(i)
         _fecAapu=self.fecAapu.get()
-        _impDebeapu=self.impDebeapu.get()
-        _impHaberapu=self.impHaberapu.get()
         _conceptoapu=self.conceptoapu.get().upper()
-        _numsoc=self.numsoc.get() 
-
-        if self.id==-1:  
-            #--> Validamos fecha de alta y un importe como minimo. 
-            if self.validacion(_fecAapu,_impDebeapu,_impHaberapu):         
-            #---> Validamos fecha de alta
-                fechv=_fecAapu    
-                if self.valfecha(fechv):
-                    #self.recuperar_saldo()
-                    #self.saldoFinal=self.saldoFinal+(_impDebeapu-_impHaberapu)
-                    try:                
-                        consulta=("""INSERT INTO apunte VALUES(null,?,?,?,?,?,?,?,?)""")
-                        parametros=(_fecAapu,_numsoc,_impDebeapu,_impHaberapu,
-                                _conceptoapu,float(_impDebeapu)-float(_impHaberapu),usuario,self.hoy)
-                        self.eje_consulta(consulta,parametros)                    
-                        messagebox.showinfo(title="Alta apuntes",message="ALTA REALIZADA CON EXITO")
-                    except:  
-                        messagebox.showwarning(title="Error",message="Error en Alta de apuntes")
-                else:
-                    messagebox.showerror(title="Fecha ALTA apuntes",message="Fecha debe ser formato AAAA-MM-DD")                
-            else:
-                messagebox.showwarning(title="Error",message="Rellene Fecha de alta y un importe")   
-        else:
-            #---> Validamos fecha de alta
-            fechv=_fecAapu    
-            if self.valfecha(fechv):
-                #self.saldoFinal=self.saldoFinal+(_impDebeapu-_impHaberapu)
-                consulta1=f"UPDATE apunte SET fecAapu=?,numsoc=?,impDebeapu=?,imphaberapu=?,conceptoapu=?,saldoapu=?,userapu=?,fecUltActapu=? WHERE id={self.id}"
-                parametro1=(_fecAapu,_numsoc,_impDebeapu,_impHaberapu,
-                            _conceptoapu,float(_impDebeapu)-float(_impHaberapu),usuario,self.hoy)
+        _impDebeapu=self.impDebeapu.get()           
+        _impHaberapu=self.impHaberapu.get() 
+        if _impDebeapu == False or _impDebeapu == "":
+            _impDebeapu=0.0
+        if _impHaberapu == False or _impHaberapu == "":
+            _impHaberapu=0.0            
+        _impDebeapu=float(_impDebeapu)
+        _impHaberapu=float(_impHaberapu)
+#--> Validamos que se introduzca Fecha de alta, Concepto y un importe como minimo.
+        if self.validacion(_fecAapu,_conceptoapu,_impDebeapu,_impHaberapu):       
+           fechv=_fecAapu
+           #---> Validamos fecha de alta              
+           if self.valfecha(fechv) == False:
+            messagebox.showerror(title="Fecha ALTA apuntes",message="Fecha debe ser formato AAAA-MM-DD y Valida")                
+           else:  
+              if self.id==-1:  
+                self.recuperar_saldo()                    
+                self.saldoFinal+=(_impDebeapu-_impHaberapu)
+                try:                
+                    consulta=("""INSERT INTO apunte VALUES(null,?,?,?,?,?,?,?)""")
+                    parametros=(_fecAapu,_conceptoapu,_impDebeapu,_impHaberapu,
+                    self.saldoFinal,usuario,self.hoy)
+                    self.eje_consulta(consulta,parametros)                                           
+                    messagebox.showinfo(title="Alta apuntes",message="ALTA REALIZADA CON EXITO")
+                    self.limpiar()
+                    self.recuperar_saldo()        
+                    self.mostrar()
+                except:  
+                    messagebox.showwarning(title="Error Alta",message="Error en Alta de apuntes")           
+              else:           
+                self.saldoFinal+=(_impDebeapu-_impHaberapu)
+                consulta1=f"UPDATE apunte SET fecAapu=?,conceptoapu=?,impDebeapu=?,imphaberapu=?,saldoToapu=?,userapu=?,fecUltActapu=? WHERE id={self.id}"
+                parametro1=(_fecAapu,_conceptoapu,_impDebeapu,_impHaberapu,
+                self.saldoFinal,usuario,self.hoy)
                 with sqlite3.connect("database.db") as conn:
                     cursor=conn.cursor()
                     cursor.execute(consulta1,parametro1)
                     self.id=-1
-                    conn.commit
+                    conn.commit                    
                     messagebox.showinfo(title="Modificacion",message="MODIFICACION REALIZADA CON EXITO")    
-            else:
-                messagebox.showerror(title="Fecha ALTA apunte",message="Fecha debe ser formato AAAA-MM-DD")                
-        self.limpiar()
-        self.mostrar()
+                self.limpiar()
+                self.recuperar_saldo()        
+                self.mostrar()
+        else:        
+         messagebox.showwarning(title="Error Alta",message="Rellene Fecha de alta, Concepto y un importe, minimo")   
 
+#--> Limpiamos los campos de entrada.
     def limpiar(self):
         self.fecAapu.delete(0,END)
+        self.conceptoapu.delete(0,END)        
         self.impDebeapu.delete(0,END)
-        self.impHaberapu.delete("1.0",END)
-        self.conceptoapu.delete(0,END)
-        self.numsoc.delete(0,END)
-        self.saldoapu.delete(0,END)   
+        self.impHaberapu.delete(0,END)
 
+#--> Funcion para seleccionar un registro en el treeview para actualizar
     def seleccionar(self):
         self.btn_actualizar("disable")
         self.btn_cancelar("normal")
@@ -1008,40 +1055,60 @@ class Apuntediario(Frame):
         self.btn_refrescar("disable")           
         id=self.tre.item(self.tre.selection())["text"]
         if id=="":
-            messagebox.showerror(title="ACTUALIZAR",message="Error, Seleccione un Apunter")
+            messagebox.showerror(title="ACTUALIZAR",message="Error, Seleccione un Apunte")
         else:
             self.id=id
             self.limpiar()
             valor=self.tre.item(self.tre.selection())["values"]
             self.fecAapu.insert(0,valor[0])
-            self.impDebeapu.insert(0,valor[1])
-            self.impHaberapu.insert(0,valor[2])
-            self.conceptoapu.insert(0,valor[3])
-            self.numsoc.insert(0,valor[4])
-            self.saldoapu.insert(0,valor[5])
+            self.conceptoapu.insert(0,valor[1])            
+            self.impDebeapu.insert(0,valor[2])
+            self.impHaberapu.insert(0,valor[3])
 
-#--> Funcion que limpia los campos.
+
+#--> Funcion para eliminar un registro de Apuntes Diario. Se borra el registro.
+    def eliminar(self):
+        id=self.tre.item(self.tre.selection())["text"]
+        valor=messagebox.askquestion(title="Eliminar",message="¿Esta seguro de querer eliminar el Apunte?")
+        if valor=="yes":
+            consulta="DELETE FROM apunte WHERE id=?"
+            parametros=(id,)
+            self.eje_consulta(consulta,parametros)
+        self.mostrar() 
+        self.recuperar_saldo()    
+        self.btn_agregar("normal")
+        self.btn_refrescar("normal")
+        self.btn_actualizar("disable")
+        self.btn_cancelar("disable")
+        self.btn_eliminar("disable")           
+
+#--> Funcion que limpia los campos al cancelar una operacion.
     def cancelar(self):
         self.limpiar()
 
 #--> Control de los eventos de los botones, activandolos o desactivandolos
-    def evento1(self,event):
+    def evento1(self,estado):
         self.btn_actualizar("normal")
+        self.btn_eliminar("normal")
         self.btn_agregar("disable")
-        self.btn_refrescar("disable")           
-    def evento2(self,event):
+        self.btn_refrescar("disable")   
+
+    def evento2(self,estado):
         self.btn_actualizar("disable")
+        self.btn_eliminar("disable")
         self.btn_agregar("normal")
         self.btn_refrescar("normal") 
         self.btn_cancelar("disable")          
                
-#--> Definicion generica del estado de los botones
+#--> Definicion generica del estado de los botones.
     def btn_agregar(self,estado):
         self.btnagregar.configure(state=estado)
     def btn_refrescar(self,estado):
         self.btnrefrescar.configure(state=estado)    
     def btn_actualizar(self,estado):
         self.btnactualizar.configure(state=estado)    
+    def btn_eliminar(self,estado):
+        self.btneliminar.configure(state=estado)    
     def btn_cancelar(self,estado):
         self.btncancelar.configure(state=estado)    
         self.limpiar()
@@ -1057,92 +1124,82 @@ class Apuntediario(Frame):
 
 #---> vamos a definir todos los campos de entrada de los Apuntes Diario.  
 #--> Fecha de alta del apunte (fecAapu)      
-        lblfecAapu=Label(self.frame,text="Fecha alta:",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblfecAapu=Label(self.frame,text="Fecha Movimiento:",font="Ariel 12",bg="aquamarine",relief="sunken")
         lblfecAapu.place(x=10,y=15)
         self.fecAapu=Entry(self.frame,width=10,relief="raised",font="Ariel 13")
-        self.fecAapu.place(x=100,y=15,height=25)
-
-#--> Importe Debe del apunte - entrada (impDebeapu)      
-        lblimpDebeapu=Label(self.frame,text="Importe entrada (D)",font="Ariel 12",bg="aquamarine",relief="sunken")
-        lblimpDebeapu.place(x=215,y=15)
-        self.impDebeapu=Entry(self.frame,width=10,relief="raised",font="Ariel 13")
-        self.impDebeapu.place(x=360,y=15,height=25)
-        lbleuroD=Label(self.frame,text="€",font="Ariel 14",bg="aquamarine",relief="sunken")
-        lbleuroD.place(x=455,y=15)
-
-#--> Importe Haber del apunte - salida (impHaberapu)      
-        lblimpHaberapu=Label(self.frame,text="Importe salida (H)",font="Ariel 12",bg="aquamarine",relief="sunken")
-        lblimpHaberapu.place(x=490,y=15)
-        self.impHaberapu=Entry(self.frame,width=10,relief="raised",font="Ariel 13")
-        self.impHaberapu.place(x=625,y=15,height=25)
-        lbleuroH=Label(self.frame,text="€",font="Ariel 14",bg="aquamarine",relief="sunken")
-        lbleuroH.place(x=720,y=15)
+        self.fecAapu.place(x=155,y=15,height=25)
 
 #--> Concepto del apunte (conceptoapu)      
         lblconceptoapu=Label(self.frame,text="Concepto",font="Ariel 12",bg="aquamarine",relief="sunken")
-        lblconceptoapu.place(x=760,y=15)
+        lblconceptoapu.place(x=255,y=15)
         self.conceptoapu=Entry(self.frame,width=30,relief="raised",font="Ariel 13")
-        self.conceptoapu.place(x=845,y=15,height=25)
+        self.conceptoapu.place(x=335,y=15,height=25)
 
-#--> Numero de Socio (numsoc)      
-        lblnumsoc=Label(self.frame,text="Nº. Socio",font="Ariel 12",bg="aquamarine",relief="sunken")
-        lblnumsoc.place(x=10,y=45)
-        self.numsoc=Entry(self.frame,width=7,relief="raised",font="Ariel 13")
-        self.numsoc.place(x=90,y=45,height=25)
+#--> Importe Debe del apunte - entrada (impDebeapu)      
+        lblimpDebeapu=Label(self.frame,text="Importe entrada (D)",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblimpDebeapu.place(x=625,y=15)
+        self.impDebeapu=Entry(self.frame,width=10,relief="raised",font="Ariel 13")
+        self.impDebeapu.place(x=770,y=15,height=25)
+        lbleuroD=Label(self.frame,text="€",font="Ariel 14",bg="aquamarine",relief="sunken")
+        lbleuroD.place(x=865,y=15)
 
-#--> Saldo diario (saldoapu)      
-        lblsaldoapu=Label(self.frame,text="Saldo Diario",font="Ariel 12",bg="aquamarine",relief="sunken")
-        lblsaldoapu.place(x=190,y=45)
-        self.saldoapu=Entry(self.frame,width=10,relief="raised",font="Ariel 13",state=DISABLED)
-        self.saldoapu.place(x=295,y=45,height=25)
-        lbleuroT=Label(self.frame,text="€",font="Ariel 14",bg="aquamarine",relief="sunken")
-        lbleuroT.place(x=390,y=45)
+#--> Importe Haber del apunte - salida (impHaberapu)      
+        lblimpHaberapu=Label(self.frame,text="Importe salida (H)",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblimpHaberapu.place(x=900,y=15)
+        self.impHaberapu=Entry(self.frame,width=10,relief="raised",font="Ariel 13")
+        self.impHaberapu.place(x=1035,y=15,height=25)
+        lbleuroH=Label(self.frame,text="€",font="Ariel 14",bg="aquamarine",relief="sunken")
+        lbleuroH.place(x=1120,y=15)
+
+#--> Saldo total (Sum(impDebeapu) - Sum(impHaberapu)) (saldoToapu)      
+        lblsaldoToapu=Label(self.frame,text="Saldo TOTAL",font="Ariel 12",bg="greenyellow",relief="sunken")
+        lblsaldoToapu.place(x=755,y=70)
+        self.saldoToapu=Entry(self.frame,width=10,relief="sunken",font="Ariel 13",bg="greenyellow",justify=RIGHT)
+        self.saldoToapu.place(x=860,y=70,height=25)
+        lbleuroT=Label(self.frame,text="€",font="Ariel 14",bg="greenyellow",relief="sunken")
+        lbleuroT.place(x=955,y=70)
 
 #--> Botones de  "ALTA", "REFRESCAR" "MODIFICACION", "ELIMINAR" y  "CANCELAR" de Apuntes 
-        self.btnagregar=self.botones(20,650,"ALTA APUNTE","blue","white",cmd=self.altaapuntes)
+        self.btnagregar=self.botones(45,650,"ALTA APUNTE","blue","white",cmd=self.altaapuntes)
         self.btnrefrescar=self.botones(250,650,"REFRESCAR","blue","white",cmd=self.mostrar)
         self.btnactualizar=self.botones(480,650,"ACTUALIZAR","blue","white",cmd=self.seleccionar) 
         self.btnactualizar.configure(state="disable")
+        self.btneliminar=self.botones(710,650,"ELIMINAR","blue","white",cmd=self.eliminar)
+        self.btneliminar.configure(state="disable")        
         self.btncancelar=self.botones(940,650,"CANCELAR","blue","white",cmd=self.cancelar) 
         self.btncancelar.configure(state="disable")   
 
-#--> Creo ahora el Treframe con su Treeview con sus cabeceras de columnas (Heading) 
-
+#--> Creo ahora el Treframe con su Treeview con sus cabeceras de columnas (Heading)
 #    Codigo(id) [0], Fecha de alta del apunte(fecAapu) [1], Importe de entrada Debe(impDebeapu) [2], 
 #    Importe de salida Haber(impHaberapu) [3], Concepto del apunte(conceptoapu) [4], 
-#    Usuario de sesion que hace el apunte(userapu) [5], Numero de socio (numsoc) [6],
-#    Saldo diario de apuntes(saldoapu) [7], Fecha ultima actualizacion(fecUltActpro) [8]  
+ 
         treFrame=Frame(self.frame,bg="cyan")
         treFrame.place(x=30,y=100,width=1000,height=500)
         scroll=Scrollbar(treFrame)
         scroll.pack(side=RIGHT,fill=Y)
-        self.tre=ttk.Treeview(treFrame,yscrollcommand=scroll.set,height=40,columns=("#0","#1","#2","#3","#4","#5","#6"))
+        self.tre=ttk.Treeview(treFrame,yscrollcommand=scroll.set,height=40,columns=("#0","#1","#2","#3","#4"))
         self.tre.pack() 
         scroll.config(command=self.tre.yview)
-        for i in [2,3,6]:
-            self.tre.column(f"#{i}",width=150,anchor=CENTER)
+        for i in [3,4]:
+            self.tre.column(f"#{i}",width=180,anchor=CENTER)
         colors=("cyan","green")
         for color in colors:
             self.tre.tag_configure(color,background=color)
         self.tre.column("#0",width=60,anchor=CENTER)
-        self.tre.column("#1",width=100,anchor=CENTER)
-        self.tre.column("#4",width=310,anchor=CENTER)
-        self.tre.column("#5",width=80,anchor=CENTER)      
+        self.tre.column("#1",width=150,anchor=CENTER)
+        self.tre.column("#2",width=410,anchor=CENTER)        
         self.tre.heading("#0",text="CODIGO",anchor=CENTER)
-        self.tre.heading("#1",text="FECHA ALTA",anchor=CENTER)
-        self.tre.heading("#5",text="Nº SOCIO",anchor=CENTER)
-        self.tre.heading("#2",text="IMPORTE ENTRADA",anchor=CENTER)
-        self.tre.heading("#3",text="IMPORTE SALIDA",anchor=CENTER)
-        self.tre.heading("#4",text="CONCEPTO",anchor=CENTER)        
-        self.tre.heading("#6",text="SALDO DIARIO",anchor=CENTER)
+        self.tre.heading("#1",text="FECHA MOVIMIENTO",anchor=CENTER)
+        self.tre.heading("#2",text="CONCEPTO",anchor=CENTER) 
+        self.tre.heading("#3",text="IMPORTE ENTRADA",anchor=CENTER)
+        self.tre.heading("#4",text="IMPORTE SALIDA",anchor=CENTER)
         try:
             self.mostrar()
+            self.recuperar_saldo()
         except:
             pass
         self.tre.bind("<Double-1>",self.evento1)
         self.tre.bind("<Button-1>",self.evento2)    
-
-
     
 #==============================================================================================
 #                                        >>  PROVEEDOR <<
@@ -1206,14 +1263,14 @@ class Proveedor(Frame):
         colores=itertools.cycle(colores)   
         for elem,color in zip(result,colores):
             self.tre.insert("",0,text=elem[0],tag=("fuente",color),values=(elem[1],elem[2],elem[3],elem[4],elem[5]))
+        if len(self.tre.get_children()) > 0:
+            self.tre.selection_set(self.tre.get_children()[0])    
 
 
 #--> Antes de cada alta se borra el contenido del treview, para una vez realizada la alta, seleccionar
 #    todos los registros de la BD de proveedor. Si self.id == -1, es una Alta, sino es una modificacion. 
     def altaproveedor(self):
-        result=self.tre.get_children()
-        for i in result:
-            self.tre.delete(i)
+        self.nombrepro.focus()
         nombrep=self.nombrepro.get()
         cifp=self.cifpro.get()
         relp=self.relpro.get("1.0",END)
@@ -1255,6 +1312,7 @@ class Proveedor(Frame):
         self.limpiar()
         self.mostrar()
 
+
     def limpiar(self):
         self.nombrepro.delete(0,END)
         self.cifpro.delete(0,END)
@@ -1289,24 +1347,25 @@ class Proveedor(Frame):
             consulta="DELETE FROM proveedor WHERE id=?"
             parametros=(id,)
             self.eje_consulta(consulta,parametros)
-        #self.mostrar()     
+        self.mostrar()     
         self.btn_agregar("normal")
         self.btn_refrescar("normal")
         self.btn_actualizar("disable")
         self.btn_cancelar("disable")
         self.btn_eliminar("disable")           
 
-#--> Funcion que limpia los campos.
+#--> Funcion que limpia los campos al cancelar una operacion.
     def cancelar(self):
         self.limpiar()
 
 #--> Control de los eventos de los botones, activandolos o desactivandolos
-    def evento1(self,event):
+    def evento1(self,estado):
         self.btn_actualizar("normal")
         self.btn_eliminar("normal")
         self.btn_agregar("disable")
-        self.btn_refrescar("disable")           
-    def evento2(self,event):
+        self.btn_refrescar("disable")    
+
+    def evento2(self,estado):
         self.btn_actualizar("disable")
         self.btn_eliminar("disable")
         self.btn_agregar("normal")
@@ -1369,21 +1428,21 @@ class Proveedor(Frame):
         self.fecBpro=Entry(self.frame)
         self.fecBpro.place(x=110,y=220,width=120)
 
-#--> Boton de  "ALTA" de proveedor, "REFRESCAR" "MODIFICACION", "ELIMINAR", "CANCELAR" 
+#--> Boton de  "ALTA PROVEEDOR", "REFRESCAR" "MODIFICAR", "ELIMINAR", "CANCELAR" 
         self.btnagregar=self.botones(30,300,"ALTA PROVEEDOR","blue","white",cmd=self.altaproveedor)
         self.btnrefrescar=self.botones(30,350,"REFRESCAR","blue","white",cmd=self.mostrar)
-        self.btnactualizar=self.botones(30,400,"ACTUALIZAR","blue","white",cmd=self.seleccionar) 
+        self.btnactualizar=self.botones(30,400,"MODIFICAR","blue","white",cmd=self.seleccionar) 
         self.btnactualizar.configure(state="disable")              
-        self.btneliminar=self.botones(30,450,"BAJA PROVEEDOR","blue","white",cmd=self.eliminar)
+        self.btneliminar=self.botones(30,450,"ELIMINAR","blue","white",cmd=self.eliminar)
         self.btneliminar.configure(state="disable")        
         self.btncancelar=self.botones(30,500,"CANCELAR","blue","white",cmd=self.cancelar) 
         self.btncancelar.configure(state="disable")   
 
-#--> Creo ahora el Treframe con su Treeview con sus cabeceras de columnas (Heading) 
-
+#--> Creo ahora el Treframe con su Treeview con sus cabeceras de columnas (Heading).
 #    Codigo(id) [0], Nombre Proveedor(nombrepro) [1], C.I.F.(cifpro) [2], 
 #    Relacion con el Proveedor(relpro) [3], Fecha de Alta(fecApro) [4], Fecha de Baja(fecBpro) [5],
 #    Fecha ultima actualizacion(fecUltActpro) [6]  
+
         treFrame=Frame(self.frame,bg="cyan")
         treFrame.place(x=280,y=30,width=860,height=600)
         scroll=Scrollbar(treFrame)
