@@ -64,3 +64,34 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS apunte (
     fecUltActapu DATE NOT NULL)""")
 conn.commit
 conn.close    
+
+#--> Creamos la tabla de Actividad:
+cursor.execute("""CREATE TABLE IF NOT EXISTS actividad (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    claveAct VARCHAR(11),
+    nombreAct VARCHAR(200),
+    responAct VARCHAR(200),
+    finiAct DATE NOT NULL,
+    ffinAct DATE NOT NULL,
+    cosresAct REAL DEFAULT 0,
+    cosparAct REAL DEFAULT 0,
+    nummaxAct INTEGER NOT NULL,
+    diasemAct VARCHAR(15),
+    HiniAct VARCHAR(10),
+    HfinAct VARCHAR(20),
+    userAct VARCHAR(20),
+    fecUltActAct DATE NOT NULL)""")
+conn.commit
+conn.close
+
+#--> Creamos la tabla de Participes:
+cursor.execute("""CREATE TABLE IF NOT EXISTS participes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    clavePar VARCHAR(11),
+    nombrePar VARCHAR(20) NOT NULL,
+    apellidosPar VARCHAR(50) NOT NULL,
+    esperaPar VARCHAR(01),   
+    userPar VARCHAR(20),
+    fecUltActPar DATE NOT NULL)""")
+conn.commit
+conn.close

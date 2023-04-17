@@ -83,11 +83,14 @@ class Login(Frame):
                 messagebox.showerror(title="Error",message="Rellene Usuario y/o contraseña")               
             cursor.close()        
 
-#--> Creamos la funcion control1, para ser llamada en el btn1, en command
+#--> Creamos la funcion control1, para ser llamada en login si va bien usuario/contraseña,
+#    sera dirigido a la Clase Container donde se inicia la seleccion de las partes de la
+#    aplicacion de Socios.
     def control1(self):
         self.controlador.show_frame(Container)    
 
-#--> Creamos una funcion para ser llamada en el btn2, en command
+#--> Creamos una funcion para ser llamada en el btn1, en command
+
     def control2(self):
         self.controlador.show_frame(Registro)           
 
@@ -108,10 +111,8 @@ class Login(Frame):
         self.password=Entry(fondo,show="*",font="16")
         self.password.place(x=540,y=450,width=240,height=40)
         btn=self.botones(540,520,"INICIAR SESION","blue","white",cmd=self.login)
-        btn1=self.botones(700,520,"REGISTRAR USUARIO","blue","white",cmd=self.control2)
-        
+        btn1=self.botones(700,520,"REGISTRAR USUARIO","blue","white",cmd=self.control2)      
        
-
 #------------------------  clase Registro
 #--> Vamos a crear una clase llamada Registro, donde se creará un frame que contenga
 #    el usuario y la contraseña del Administrador, para caso de ser validos se darán de alta 
@@ -216,7 +217,7 @@ class Registro(Frame):
 
 #--------------> clase Container  <----------------------------------------------------------------
 #--> Vamos a crear el contenedor, con su controlador, y sus botones para "Gestion Socios" y
-#     "Gestion Actividades","Apunte Diario" y "Proveedores", .
+#     "Gestion Actividades","Partticipes", "Apunte Diario" y "Proveedores", .
 class Container(Frame):
     def __init__(self,padre,controlador):
         super().__init__(padre)
@@ -225,9 +226,9 @@ class Container(Frame):
         self.place(x=0,y=0,width=1200,height=800) 
         self.widgets()
         self.frames={}
-#--> Iteramos con una instruccion "for", tanto a Socios, Actividad, Apunte diario y Proveedor.
-#     para que la primera pantalla que se activa es la de Socios.        
-        for i in (Socios,Actividad,Apuntediario,Proveedor):
+#--> Iteramos con una instruccion "for", tanto a Socios, Actividad, Participes, Apunte diario 
+# y Proveedor. Para que la primera pantalla que se activa es la de Socios.        
+        for i in (Socios,Actividad,Participes,Apuntediario,Proveedor):
             frame=i(self)
             self.frames[i]=frame
             frame.pack()
@@ -248,19 +249,21 @@ class Container(Frame):
         fg=bcolor,
         bg=fcolor,
         border=1,
+        font="Arial 15",
+        justify=CENTER,
         activeforeground=fcolor,
         activebackground=bcolor,
         command=cmd)
         btn.bind("<Enter>",on_enter)
         btn.bind("<Leave>",on_leave)
-        btn.place(x=x,y=y,width=300,height=40)  
+        btn.place(x=x,y=y,width=240,height=40)  
 
     def widgets(self):
-        socios=self.botones(0,0,"GESTION SOCIOS","blue","white",cmd=self.socios)               
-        actividad=self.botones(300,0,"GESTION ACTIVIDADES","blue","white",cmd=self.actividad)
-        apuntediario=self.botones(600,0,"APUNTE DIARIO","blue","white",cmd=self.apuntediario)
-        proveedor=self.botones(900,0,"PROVEEDORES","blue","white",cmd=self.proveedor)
-
+        socios=self.botones(0,0,"GESTION SOCIOS","greenyellow","grey",cmd=self.socios)               
+        actividad=self.botones(240,0,"GESTION ACTIVIDADES","#33CBFF","grey",cmd=self.actividad)
+        participes=self.botones(480,0,"PARTICIPES","blue","grey",cmd=self.participes)
+        apuntediario=self.botones(720,0,"APUNTE DIARIO","yellow","grey",cmd=self.apuntediario)
+        proveedor=self.botones(960,0,"PROVEEDORES","#FF6633","grey",cmd=self.proveedor)
 
 #--> Creamos una funcion show_frames para almacenar los diferentes frames
     def show_frames(self,container):
@@ -275,13 +278,16 @@ class Container(Frame):
     def actividad(self):
         self.show_frames(Actividad)        
 
+    def participes(self):
+        self.show_frames(Participes)        
+
     def apuntediario(self):
         self.show_frames(Apuntediario)        
 
     def proveedor(self):
         self.show_frames(Proveedor)        
 
-#--> Creamos las clases, de Socios, de Actividad, de Apuntediario y de Proveedor, 
+#--> Creamos las clases, de Socios, de Actividad, Participes, de Apuntediario y de Proveedor, 
 #==============================================================================================
 #                                        >>  SOCIOS <<
 #==============================================================================================
@@ -868,6 +874,7 @@ class Reporte:
 class Actividad(Frame):
     def __init__(self,padre): 
         super().__init__(padre)
+        self.id=-1   
         self.widgets()
 
 #--> Le damos un movimiento de color, al paso del mouse/enter por las teclas de los botones
@@ -887,10 +894,214 @@ class Actividad(Frame):
         command=cmd)
         btn.bind("<Enter>",on_enter)
         btn.bind("<Leave>",on_leave)
-        btn.place(x=x,y=y,width=240,height=40)    
+        btn.place(x=x,y=y,width=150,height=40)  
+        return btn
+
+#--> Funcion para validar las fechas.
+    def valfecha(self,fechv):
+        if fechv == ' ':
+            return False
+        else:
+            try:
+                fechv=datetime.strptime(fechv,'%Y-%m-%d').date()            
+                return True
+            except ValueError:                                
+                return False
+
+#--> Funcion acceso a Base de Datos
+    def eje_consulta(self,consulta,parametros=()):
+        db=Datos()       
+        result=db.consultas(consulta,parametros)
+        return result        
+
+#--> Funcion para validar campos de entrada minimos
+    def validacion(self,_claveAct,_nombreAct,_responAct,_finiAct):        
+        if len(_claveAct) > 0 and len(_nombreAct) > 0 and len(_responAct) > 0 and len(_finiAct) > 0:
+          return True
+        
+#    Con el boton "REFRESCAR". Se borra el contenido del treview, y se seleccionan todos los registros 
+#    de la BD de actividad.
+    def mostrar(self):
+        colores=("pink1","LightPink1")
+        for color in colores:
+            self.tre.tag_configure(color,background=color)
+        result=self.tre.get_children()
+        for i in result:
+            self.tre.delete(i)
+        conn=sqlite3.connect("database.db")
+        cursor=conn.cursor()    
+        result=cursor.execute("SELECT * FROM actividad ORDER BY claveAct,id DESC")  
+        colores=itertools.cycle(colores)   
+        for elem,color in zip(result,colores):
+            self.tre.insert("",0,text=elem[0],tag=("fuente",color),values=(elem[1],elem[2],elem[3],elem[4],
+                                                                           elem[5],elem[10],elem[11],elem[8],elem[6],elem[7],elem[9]))
+        if len(self.tre.get_children()) > 0:
+            self.tre.selection_set(self.tre.get_children()[0])   
 
 #--> Funcion de dar de alta una actividad al pulsar el boton "ALTA "
-    def altaactividad(self):
+    def alta_actividad(self):
+        _claveAct=self.claveAct.get().upper()
+        _nombreAct=self.nombreAct.get().upper()
+        _responAct=self.responAct.get().upper()           
+        _finiAct=self.finiAct.get()
+        _ffinAct=self.ffinAct.get()
+        _cosresAct=self.cosresAct.get()
+        if _cosresAct == False or _cosresAct == "":
+            _cosresAct=0.0
+        _cosparAct=self.cosparAct.get()
+        if _cosparAct == False or _cosparAct == "":
+            _cosparAct=0.0
+        _nummaxAct=self.nummaxAct.get()
+        _diasemAct=self.diasemAct.get().upper()
+        _HiniAct=self.HiniAct.get().upper()
+        _HfinAct=self.HfinAct.get().upper()
+
+#--> Validamos que se introduzca la clave de Actividad, el nombre de la Actividad, el responsable
+#    de la Actividad y la fecha inicial, como minimo.
+        if self.validacion(_claveAct,_nombreAct,_responAct,_finiAct):       
+           fechv=_finiAct
+           #---> Validamos fecha de de inicio de la Actividad              
+           if self.valfecha(fechv) == False:
+            messagebox.showerror(title="Fecha INICIO de Actividad",message="Fecha debe ser formato AAAA-MM-DD y Valida")                
+           else:  
+              if self.id==-1:  
+                try:                
+                    consulta=("""INSERT INTO actividad VALUES(null,?,?,?,?,?,?,?,?,?,?,?,?,?)""")
+                    parametros=(_claveAct,_nombreAct,_responAct,_finiAct,_ffinAct,
+                                _cosresAct,_cosparAct,_nummaxAct,_diasemAct,_HiniAct,
+                                _HfinAct,usuario,self.hoy)                    
+                    self.eje_consulta(consulta,parametros)
+                    messagebox.showinfo(title="Alta Actividad",message="ALTA REALIZADA CON EXITO")
+                    self.limpiar()       
+                    self.mostrar()
+                except:  
+                    messagebox.showwarning(title="Error Alta",message="Error en Alta de actividad")           
+              else:           
+                consulta1=f"UPDATE actividad SET claveAct=?,nombreAct=?,responAct=?,finiAct=?,ffinAct=?,cosresAct=?,cosparAct=?,nummaxAct=?,diasemAct=?,HiniAct=?,HfinAct=?,userAct=?,fecUltActAct=? WHERE id={self.id}"
+                parametro1=(_claveAct,_nombreAct,_responAct,_finiAct,_ffinAct,
+                                _cosresAct,_cosparAct,_nummaxAct,_diasemAct,_HiniAct,
+                                _HfinAct,usuario,self.hoy)
+                with sqlite3.connect("database.db") as conn:
+                    cursor=conn.cursor()
+                    cursor.execute(consulta1,parametro1)
+                    self.id=-1
+                    conn.commit                    
+                    messagebox.showinfo(title="Modificacion",message="MODIFICACION REALIZADA CON EXITO")    
+                self.limpiar()
+                self.mostrar()
+        else:        
+         messagebox.showwarning(title="Error Alta",message="Rellene Clave, Nombre, Responsable y Fecha inicial como minimo")   
+    
+#--> Limpiamos los campos de entrada.
+    def limpiar(self):
+        self.claveAct.delete(0,END)
+        self.nombreAct.delete(0,END)        
+        self.responAct.delete(0,END)
+        self.finiAct.delete(0,END)
+        self.ffinAct.delete(0,END)
+        self.cosresAct.delete(0,END)
+        self.cosparAct.delete(0,END)
+        self.nummaxAct.delete(0,END)
+        self.diasemAct.delete(0,END)
+        self.HiniAct.delete(0,END)
+        self.HfinAct.delete(0,END)
+
+#--> Funcion para seleccionar un registro en el treeview para actualizar
+    def seleccionar(self):
+        self.btn_actualizar("disable")
+        self.btn_cancelar("normal")
+        self.btn_agregar("normal")
+        self.btn_eliminar("disable")
+        self.btn_refrescar("disable")           
+        id=self.tre.item(self.tre.selection())["text"]
+        if id=="":
+            messagebox.showerror(title="ACTUALIZAR",message="Error, Seleccione una Actividad")
+        else:
+            self.id=id
+            self.limpiar()
+            valor=self.tre.item(self.tre.selection())["values"]
+            self.claveAct.insert(0,valor[0])
+            self.nombreAct.insert(0,valor[1])            
+            self.responAct.insert(0,valor[2])
+            self.finiAct.insert(0,valor[3])
+            self.ffinAct.insert(0,valor[4])
+            self.HiniAct.insert(0,valor[5])
+            self.HfinAct.insert(0,valor[6])
+            self.nummaxAct.insert(0,valor[7])
+            self.cosresAct.insert(0,valor[8])
+            self.cosparAct.insert(0,valor[9])
+            self.diasemAct.insert(0,valor[10])
+ 
+#--> Funcion para eliminar un registro de Actividad. Se borra el registro. Pero esto implica que 
+#    se ELIMINARAN TODOS los registros de esta actividad de la B.D. de participes.
+    def eliminar(self):  
+        clavePar2=""
+        id=self.tre.item(self.tre.selection())["text"]
+        valor=self.tre.item(self.tre.selection())["values"]
+        clavePar2=valor[0]
+        res=messagebox.askquestion(title="Eliminar",message="¿Esta seguro de querer eliminar el la Actividad -- Se ELIMINARAN todos los participes?")
+        if res=="yes":
+            consulta="DELETE FROM actividad WHERE id=?"
+            parametros=(id,)
+            self.eje_consulta(consulta,parametros)
+            messagebox.showinfo(title="Baja Actividad",message="BAJA DE ACTIVIDAD REALIZADA CON EXITO")            
+            self.eliminar_participes(clavePar2)
+        self.mostrar()   
+        self.btn_agregar("normal")
+        self.btn_refrescar("normal")
+        self.btn_actualizar("disable")
+        self.btn_cancelar("disable")
+        self.btn_eliminar("disable")       
+
+#--> Funcion eliminar los participes inscritos en una Actividad.
+    def eliminar_participes(self,clavePar2):
+        with sqlite3.connect("database.db") as conn:
+            cursor = conn.cursor()
+            consulta ='SELECT * FROM participes WHERE clavePar = ?'
+            parametros = (clavePar2,)
+            cursor.execute(consulta, parametros)
+            resultado = cursor.fetchall()
+            conn.commit()
+            if resultado is None:
+                messagebox.showinfo(title="Eliminar Participes",message="No existen Participes para esta Actividad")                 
+            else:
+                consulta="DELETE FROM participes WHERE clavePar=?"
+                parametros=(clavePar2,)
+                self.eje_consulta(consulta,parametros)
+                messagebox.showinfo(title="Baja Participes",message="BAJA DE PARTICIPES REALIZADA CON EXITO")            
+
+#--> Funcion que limpia los campos al cancelar una operacion.
+    def cancelar(self):
+        self.limpiar()
+
+#--> Control de los eventos de los botones, activandolos o desactivandolos
+    def evento1(self,estado):
+        self.btn_actualizar("normal")
+        self.btn_eliminar("normal")
+        self.btn_agregar("disable")
+        self.btn_refrescar("disable")   
+
+    def evento2(self,estado):
+        self.btn_actualizar("disable")
+        self.btn_eliminar("disable")
+        self.btn_agregar("normal")
+        self.btn_refrescar("normal") 
+        self.btn_cancelar("disable")          
+               
+#--> Definicion generica del estado de los botones.
+    def btn_agregar(self,estado):
+        self.btnagregar.configure(state=estado)
+    def btn_refrescar(self,estado):
+        self.btnrefrescar.configure(state=estado)    
+    def btn_actualizar(self,estado):
+        self.btnactualizar.configure(state=estado)    
+    def btn_eliminar(self,estado):
+        self.btneliminar.configure(state=estado)    
+    def btn_cancelar(self,estado):
+        self.btncancelar.configure(state=estado)    
+        self.limpiar()
+
+    def dia_semana(self):
         pass
 
     def widgets(self):
@@ -899,7 +1110,397 @@ class Actividad(Frame):
         actividad.place(x=0,y=0,height=30,width=1200)
         self.frame=Frame(self,bg="#9ACDD7",bd=15,relief="groove")   
         self.frame.place(x=0,y=30,width=1200,height=800) 
+        self.hoy=(datetime.today().strftime("%Y-%m-%d"))
+        clavePar2 = ''
 
+#--> Nombre de la actividad (nombreAct)      
+        lblnombreAct=Label(self.frame,text="Nombre actividad:",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblnombreAct.place(x=10,y=15)
+        self.nombreAct=Entry(self.frame,width=20,relief="raised",font="Ariel 13")
+        self.nombreAct.place(x=145,y=15,height=25)
+
+#--> Responsable de la actividad (responAct)      
+        lblresponAct=Label(self.frame,text="Responsable actividad:",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblresponAct.place(x=340,y=15)
+        self.responAct=Entry(self.frame,width=20,relief="raised",font="Ariel 13")
+        self.responAct.place(x=510,y=15,height=25)   
+
+#--> Fecha de inicio de la actividad (finiAct)
+        lblfiniAct=Label(self.frame,text="Fecha inicio Act.:",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblfiniAct.place(x=710,y=15)
+        self.finiAct=Entry(self.frame,width=10,relief="raised",font="Ariel 13")
+        self.finiAct.place(x=840,y=15,height=25)       
+
+#--> Fecha fin de la actividad (ffinAct)
+        lblffinAct=Label(self.frame,text="Fecha fin Act.:",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblffinAct.place(x=950,y=15)
+        self.ffinAct=Entry(self.frame,width=10,relief="raised",font="Ariel 13")
+        self.ffinAct.place(x=1060,y=15,height=25)       
+
+#--> Clave de la actividad (claveAct)
+        lblclaveAct=Label(self.frame,text="Clave Actividad:",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblclaveAct.place(x=10,y=45)
+        self.claveAct=Entry(self.frame,width=12,relief="raised",font="Ariel 13")
+        self.claveAct.place(x=130,y=45,height=25)       
+
+#--> Coste mes Responsable (cosresAct)
+        lblcosresAct=Label(self.frame,text="Coste mes Responsable:",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblcosresAct.place(x=250,y=45)
+        self.cosresAct=Entry(self.frame,width=5,relief="raised",font="Ariel 13")
+        self.cosresAct.place(x=440,y=45,height=25)       
+        lbleuroR=Label(self.frame,text="€",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lbleuroR.place(x=490,y=45)
+
+#--> Coste mes Participe (cosparAct)
+        lblcosparAct=Label(self.frame,text="Coste mes Participe:",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblcosparAct.place(x=530,y=45)
+        self.cosparAct=Entry(self.frame,width=5,relief="raised",font="Ariel 13")
+        self.cosparAct.place(x=690,y=45,height=25)
+        lbleuroP=Label(self.frame,text="€",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lbleuroP.place(x=740,y=45)
+
+#--> Numero maximo de Participes por Actividad (nummaxAct)
+        lblnummaxAct=Label(self.frame,text="Numero maximo Participes/Activi.:",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblnummaxAct.place(x=800,y=45)
+        self.nummaxAct=Entry(self.frame,width=8,relief="raised",font="Ariel 13")
+        self.nummaxAct.place(x=1070,y=45,height=25)
+
+#--> Dia semanal de la actividad (diasemAct)
+        lbldiasemAct=Label(self.frame,text="Dia semanal Actividad:",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lbldiasemAct.place(x=10,y=80)
+        self.diasemAct=Entry(self.frame,width=12,relief="raised",font="Ariel 13")
+        self.diasemAct.place(x=180,y=80,height=25)       
+        lblnomdiaAct=Label(self.frame,text="Lunes,Martes,Miercoles,Jueves,Viernes,Sabado,Domingo",font="Ariel 8",bg="aquamarine",relief="sunken")
+        lblnomdiaAct.place(x=10,y=110)
+
+#--> Hora comienzo de la actividad (HiniAct)
+        lblHiniAct=Label(self.frame,text="Hora inicio Actividad:",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblHiniAct.place(x=360,y=80)
+        self.HiniAct=Entry(self.frame,width=5,relief="raised",font="Ariel 13")
+        self.HiniAct.place(x=520,y=80,height=25)    
+        lblhorminAct=Label(self.frame,text="Hora/minutos : hh:mm ",font="Ariel 8",bg="aquamarine",relief="sunken")
+        lblhorminAct.place(x=360,y=110)           
+
+#--> Hora finalizacion de la actividad (HfinAct)
+        lblHfinAct=Label(self.frame,text="Hora final Actividad:",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblHfinAct.place(x=610,y=80)
+        self.HfinAct=Entry(self.frame,width=5,relief="raised",font="Ariel 13")
+        self.HfinAct.place(x=765,y=80,height=25)      
+
+#--> Botones de  "ALTA ACT.", "REFRESCAR", 
+#    "MODIFICACION ACT.", "ELIMINAR ACT." y  "CANCELAR" de Actividad
+ 
+        self.btnagregar=self.botones(45,650,"ALTA ACT.","blue","white",cmd=self.alta_actividad)
+        self.btnrefrescar=self.botones(215,650,"REFRESCAR","blue","white",cmd=self.mostrar)
+        self.btnactualizar=self.botones(395,650,"ACTUALIZAR ACT.","blue","white",cmd=self.seleccionar) 
+        self.btnactualizar.configure(state="disable")
+        self.btneliminar=self.botones(595,650,"ELIMINAR ACT.","blue","white",cmd=self.eliminar)
+        self.btneliminar.configure(state="disable")        
+        self.btncancelar=self.botones(795,650,"CANCELAR","blue","white",cmd=self.cancelar) 
+        self.btncancelar.configure(state="disable")   
+
+#--> Creo ahora el Treframe con su Treeview con sus cabeceras de columnas (Heading)
+#    Codigo(id) [0], Nombre de la actividad (nombreAct) [1], 
+#    Responsable de la actividad (responAct) [2], Fecha de inicio de la actividad (finiact) [3]  
+
+        treFrame=Frame(self.frame,bg="cyan")
+        treFrame.place(x=15,y=140,width=1150,height=450)
+        scroll=Scrollbar(treFrame)
+        scroll.pack(side=RIGHT,fill=Y)
+        self.tre=ttk.Treeview(treFrame,yscrollcommand=scroll.set,height=40,columns=("#0","#1","#2","#3","#4","#5","#6","#7","#8","#9","#10"))
+        self.tre.pack() 
+        scroll.config(command=self.tre.yview)
+        for i in [2,3]:
+            self.tre.column(f"#{i}",width=180,anchor=CENTER)
+        colors=("cyan","green")
+        for color in colors:
+            self.tre.tag_configure(color,background=color)
+        self.tre.column("#0",width=35,anchor=CENTER)
+        self.tre.column("#1",width=110,anchor=CENTER)
+        self.tre.column("#4",width=85,anchor=CENTER)
+        self.tre.column("#5",width=85,anchor=CENTER)
+        self.tre.column("#6",width=80,anchor=CENTER)
+        self.tre.column("#7",width=80,anchor=CENTER)
+        self.tre.column("#8",width=70,anchor=CENTER)
+        self.tre.column("#9",width=70,anchor=CENTER)
+        self.tre.column("#10",width=70,anchor=CENTER)
+        self.tre.column("#11",width=100,anchor=CENTER)       
+        self.tre.heading("#0",text="COD.",anchor=CENTER)
+        self.tre.heading("#1",text="CLAVE ACTIVIDAD",anchor=CENTER)
+        self.tre.heading("#2",text="NOMBRE ACTIVIDAD",anchor=CENTER)
+        self.tre.heading("#3",text="RESPONSABLE ACTIVIDAD",anchor=CENTER)        
+        self.tre.heading("#4",text="FECHA INICIO",anchor=CENTER)
+        self.tre.heading("#5",text="FECHA FIN",anchor=CENTER)
+        self.tre.heading("#6",text="HORA INICIO",anchor=CENTER)
+        self.tre.heading("#7",text="HORA FIN",anchor=CENTER)
+        self.tre.heading("#8",text="NUM. PARTI.",anchor=CENTER)
+        self.tre.heading("#9",text="COST.RESP.",anchor=CENTER)
+        self.tre.heading("#10",text="COST.PARTI.",anchor=CENTER)
+        self.tre.heading("#11",text="DIA SEM.",anchor=CENTER)
+        try:            
+           self.mostrar()
+        except:
+            pass
+        self.tre.bind("<Double-1>",self.evento1)
+        self.tre.bind("<Button-1>",self.evento2)              
+
+#==============================================================================================
+#                                 >>  PARTICIPES (ACTIVIDADES) <<
+#==============================================================================================
+
+class Participes(Frame):
+    def __init__(self,padre):
+        super().__init__(padre)
+        self.pack()
+        self.place(x=0,y=0,width=1200,height=800)
+        self.id=-1 
+        self.widgets()
+
+#--> Le damos un movimiento de color, al paso del mouse/enter por las teclas de los botones
+    def botones(self,x,y,text,bcolor,fcolor,cmd):
+        def on_enter(e):
+            btn["background"]=bcolor
+            btn["foreground"]=fcolor
+        def on_leave(e):
+            btn["background"]=fcolor
+            btn["foreground"]=bcolor
+        btn=Button(self,text=text,
+        fg=bcolor,
+        bg=fcolor,
+        border=1,
+        activeforeground=fcolor,
+        activebackground=bcolor,
+        command=cmd)
+        btn.bind("<Enter>",on_enter)
+        btn.bind("<Leave>",on_leave)
+        btn.place(x=x,y=y,width=150,height=40)    
+        return btn
+
+#--> Funcion para validar las fechas.
+    def valfecha(self,fechv):
+        if fechv == ' ':
+            return False
+        else:
+            try:
+                fechv=datetime.strptime(fechv,'%Y-%m-%d').date()            
+                return True
+            except ValueError:                                
+                return False
+
+#--> Funcion acceso a Base de Datos
+    def eje_consulta(self,consulta,parametros=()):
+        db=Datos()       
+        result=db.consultas(consulta,parametros)
+        return result        
+
+#--> Funcion para validar campos de entrada minimos
+    def validacion(self,_clavePar,_nombrePar,_apellidosPar):        
+        if len(_clavePar) > 0 and len(_nombrePar) > 0 and len(_apellidosPar) > 0:
+          return True
+
+#    Con el boton "REFRESCAR". Se borra el contenido del treview, y se seleccionan todos los registros 
+#    de la BD de participes.
+    def mostrar(self):
+        colores=("pink1","LightPink1")
+        for color in colores:
+            self.tre.tag_configure(color,background=color)
+        result=self.tre.get_children()
+        for i in result:
+            self.tre.delete(i)
+        conn=sqlite3.connect("database.db")
+        cursor=conn.cursor()    
+        result=cursor.execute("SELECT * FROM participes ORDER BY clavePar,esperaPar DESC")  
+        colores=itertools.cycle(colores)   
+        for elem,color in zip(result,colores):
+            self.tre.insert("",0,text=elem[0],tag=("fuente",color),values=(elem[1],elem[2],elem[3],elem[4]))
+        if len(self.tre.get_children()) > 0:
+            self.tre.selection_set(self.tre.get_children()[0])   
+
+#--> Funcion de dar de alta un participe de una Actividad al pulsar el boton "ALTA "
+    def alta_participe(self):
+        _clavePar=self.clavePar.get().upper()
+        _nombrePar=self.nombrePar.get().upper()
+        _apellidosPar=self.apellidosPar.get().upper()           
+        _esperaPar=self.esperaPar.get().upper() 
+        if _esperaPar == "":
+            _esperaPar = "N"    
+#--> Validamos que se introduzca la clave de Participe/Actividad, el nombre del participe,
+#    el apellido del participe y si es activo o en lista de espera, si este ultimo campo no se 
+#    cumplimenta se asume automatico que es "N".
+
+        if self.validacion(_clavePar,_nombrePar,_apellidosPar):   
+            if self.id==-1:  
+                try:                
+                    consulta=("""INSERT INTO participes VALUES(null,?,?,?,?,?,?)""")
+                    parametros=(_clavePar,_nombrePar,_apellidosPar,_esperaPar,usuario,self.hoy)                    
+                    self.eje_consulta(consulta,parametros)                                           
+                    messagebox.showinfo(title="Alta Participe",message="ALTA REALIZADA CON EXITO")
+                    self.limpiar()       
+                    self.mostrar()
+                except:  
+                    messagebox.showwarning(title="Error Alta",message="Error en Alta de actividad")           
+            else:           
+                consulta1=f"UPDATE participes SET clavePar=?,nombrePar=?,apellidosPar=?,esperaPar=?,userPar=?,fecUltActPar=? WHERE id={self.id}"
+                parametro1=(_clavePar,_nombrePar,_apellidosPar,_esperaPar,usuario,self.hoy)
+                with sqlite3.connect("database.db") as conn:
+                    cursor=conn.cursor()
+                    cursor.execute(consulta1,parametro1)
+                    self.id=-1
+                    conn.commit                    
+                    messagebox.showinfo(title="Modificacion",message="MODIFICACION REALIZADA CON EXITO")    
+                self.limpiar()
+                self.mostrar()
+        else:        
+         messagebox.showwarning(title="Error Alta",message="Rellene Clave, Nombre y Apellidos como minimo")   
+
+#--> Limpiamos los campos de entrada.
+    def limpiar(self):
+        self.clavePar.delete(0,END)
+        self.nombrePar.delete(0,END)        
+        self.apellidosPar.delete(0,END)
+        self.esperaPar.delete(0,END)
+
+#--> Funcion para seleccionar un registro en el treeview para actualizar
+    def seleccionar(self):
+        self.btn_actualizar("disable")
+        self.btn_cancelar("normal")
+        self.btn_agregar("normal")
+        self.btn_eliminar("disable")
+        self.btn_refrescar("disable")           
+        id=self.tre.item(self.tre.selection())["text"]
+        if id=="":
+            messagebox.showerror(title="ACTUALIZAR",message="Error, Seleccione una Actividad")
+        else:
+            self.id=id
+            self.limpiar()
+            valor=self.tre.item(self.tre.selection())["values"]
+            self.clavePar.insert(0,valor[0])
+            self.nombrePar.insert(0,valor[1])            
+            self.apellidosPar.insert(0,valor[2])
+            self.esperaPar.insert(0,valor[3])
+
+#--> Funcion para eliminar un registro de un participe. Se borra solo este registro. 
+    def eliminar(self):  
+        #clavePar2=""
+        id=self.tre.item(self.tre.selection())["text"]
+        #valor=self.tre.item(self.tre.selection())["values"]
+        #print("valor :",valor)
+        #clavePar2=valor[0]
+        #print("clavePar2 :",clavePar2)
+        res=messagebox.askquestion(title="Eliminar",message="¿Esta seguro de querer eliminar el participe?")
+        if res=="yes":
+            consulta="DELETE FROM participes WHERE id=?"
+            parametros=(id,)
+            self.eje_consulta(consulta,parametros)
+        self.mostrar()   
+        self.btn_agregar("normal")
+        self.btn_refrescar("normal")
+        self.btn_actualizar("disable")
+        self.btn_cancelar("disable")
+        self.btn_eliminar("disable")           
+
+#--> Funcion que limpia los campos al cancelar una operacion.
+    def cancelar(self):
+        self.limpiar()
+
+#--> Control de los eventos de los botones, activandolos o desactivandolos
+    def evento1(self,estado):
+        self.btn_actualizar("normal")
+        self.btn_eliminar("normal")
+        self.btn_agregar("disable")
+        self.btn_refrescar("disable")   
+
+    def evento2(self,estado):
+        self.btn_actualizar("disable")
+        self.btn_eliminar("disable")
+        self.btn_agregar("normal")
+        self.btn_refrescar("normal") 
+        self.btn_cancelar("disable")          
+               
+#--> Definicion generica del estado de los botones.
+    def btn_agregar(self,estado):
+        self.btnagregar.configure(state=estado)
+    def btn_refrescar(self,estado):
+        self.btnrefrescar.configure(state=estado)    
+    def btn_actualizar(self,estado):
+        self.btnactualizar.configure(state=estado)    
+    def btn_eliminar(self,estado):
+        self.btneliminar.configure(state=estado)    
+    def btn_cancelar(self,estado):
+        self.btncancelar.configure(state=estado)    
+        self.limpiar()
+
+    def widgets(self):
+        actividad=Label(self,text="PARTICIPES",bg="#3368FF",font="Arial 18")
+        actividad.pack()
+        actividad.place(x=0,y=0,height=30,width=1200)
+        self.frame=Frame(self,bg="#339EFF",bd=15,relief="groove")   
+        self.frame.place(x=0,y=30,width=1200,height=800) 
+        self.hoy=(datetime.today().strftime("%Y-%m-%d"))
+
+#--> Clave de la actividad/Participe (clavePar)
+        lblclavePar=Label(self.frame,text="Clave Actividad/Participe:",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblclavePar.place(x=15,y=15)
+        self.clavePar=Entry(self.frame,width=12,relief="raised",font="Ariel 13")
+        self.clavePar.place(x=210,y=15,height=25)    
+#--> Nombre participe (nombrePar)      
+        lblnombrePar=Label(self.frame,text="Nombre:",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblnombrePar.place(x=325,y=15)
+        self.nombrePar=Entry(self.frame,width=20,relief="raised",font="Ariel 13")
+        self.nombrePar.place(x=400,y=15,height=25)  
+#--> Apellidos (apellidos)        
+        lblapellidosPar=Label(self.frame,text="Apellidos :",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblapellidosPar.place(x=610,y=15)
+        self.apellidosPar=Entry(self.frame,width=50,relief="raised",font="Ariel 13")
+        self.apellidosPar.place(x=700,y=15,height=25)    
+#--> Clave de lista de espera S/N (esperaPar)
+        lblesperaPar=Label(self.frame,text="Lista de espera S/N:",font="Ariel 12",bg="aquamarine",relief="sunken")
+        lblesperaPar.place(x=15,y=45)
+        self.esperaPar=Entry(self.frame,width=3,relief="raised",font="Ariel 13")
+        self.esperaPar.place(x=170,y=45,height=25)    
+
+#--> Botones de  "ALTA", "REFRESCAR", 
+#    "MODIFICACION", "ELIMINAR" y  "CANCELAR" de un Participe
+#---> Boton de acceso a Gestion de Participes 
+        self.btnagregar=self.botones(45,650,"ALTA","blue","white",cmd=self.alta_participe)
+        self.btnrefrescar=self.botones(215,650,"REFRESCAR","blue","white",cmd=self.mostrar)
+        self.btnactualizar=self.botones(395,650,"ACTUALIZAR","blue","white",cmd=self.seleccionar) 
+        self.btnactualizar.configure(state="disable")
+        self.btneliminar=self.botones(595,650,"ELIMINAR","blue","white",cmd=self.eliminar)
+        self.btneliminar.configure(state="disable")        
+        self.btncancelar=self.botones(795,650,"CANCELAR","blue","white",cmd=self.cancelar) 
+        self.btncancelar.configure(state="disable")   
+
+#--> Creo ahora el Treframe con su Treeview con sus cabeceras de columnas (Heading)
+#    Codigo(id) [0], Nombre de la actividad (nombreAct) [1], 
+#    Responsable de la actividad (responAct) [2], Fecha de inicio de la actividad (finiact) [3]  
+ 
+        treFrame=Frame(self.frame,bg="cyan")
+        treFrame.place(x=15,y=100,width=1100,height=500)
+        scroll=Scrollbar(treFrame)
+        scroll.pack(side=RIGHT,fill=Y)
+        self.tre=ttk.Treeview(treFrame,yscrollcommand=scroll.set,height=40,columns=("#0","#1","#2","#3","#4"))
+        self.tre.pack() 
+        scroll.config(command=self.tre.yview)
+        colors=("cyan","green")
+        for color in colors:
+            self.tre.tag_configure(color,background=color)
+        self.tre.column("#0",width=60,anchor=CENTER)
+        self.tre.column("#1",width=200,anchor=CENTER)
+        self.tre.column("#2",width=200,anchor=CENTER)
+        self.tre.column("#3",width=450,anchor=CENTER)
+        self.tre.column("#4",width=200,anchor=CENTER)       
+        self.tre.heading("#0",text="CODIGO",anchor=CENTER)
+        self.tre.heading("#1",text="CLAVE PARTICIPE/ACTIVIDAD",anchor=CENTER)
+        self.tre.heading("#2",text="NOMBRE",anchor=CENTER)
+        self.tre.heading("#3",text="APELLIDOS",anchor=CENTER)        
+        self.tre.heading("#4",text="LISTA ESPERA S/N",anchor=CENTER)
+        try:            
+           self.mostrar()
+        except:
+            pass
+        self.tre.bind("<Double-1>",self.evento1)
+        self.tre.bind("<Button-1>",self.evento2) 
 
 #==============================================================================================
 #                                 >>  APUNTES / DIARIO <<
