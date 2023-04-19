@@ -259,11 +259,11 @@ class Container(Frame):
         btn.place(x=x,y=y,width=240,height=40)  
 
     def widgets(self):
-        socios=self.botones(0,0,"GESTION SOCIOS","greenyellow","grey",cmd=self.socios)               
+        socios=self.botones(0,0,"GESTION SOCIOS","green","#D1DCDC",cmd=self.socios)               
         actividad=self.botones(240,0,"GESTION ACTIVIDADES","#33CBFF","grey",cmd=self.actividad)
-        participes=self.botones(480,0,"PARTICIPES","blue","grey",cmd=self.participes)
+        participes=self.botones(480,0,"PARTICIPES","blue","#D1DCDC",cmd=self.participes)
         apuntediario=self.botones(720,0,"APUNTE DIARIO","yellow","grey",cmd=self.apuntediario)
-        proveedor=self.botones(960,0,"PROVEEDORES","#FF6633","grey",cmd=self.proveedor)
+        proveedor=self.botones(960,0,"PROVEEDORES","#FF6633","#D1DCDC",cmd=self.proveedor)
 
 #--> Creamos una funcion show_frames para almacenar los diferentes frames
     def show_frames(self,container):
@@ -669,8 +669,8 @@ class Socios(Frame):
 
 #--> Vamos a crear el metodo de listar la informacion de los socios, escogiendo los campos fundamentales.
 #    Realmente no se está listando, sino exportando un fichero, en formato PDF o xlsx.
-    def listar_socios(self):
-        pass
+    #def listar_socios(self):
+    #    pass
 
 #--> Creamos los widgets y variables para Socios.
     def widgets(self):
@@ -686,9 +686,9 @@ class Socios(Frame):
         self.hoy=(datetime.today().strftime("%Y-%m-%d"))
         self.fecha=IntVar
         self.valido=False
-        self.formato=ttk.Combobox(self,font="16",values=["xlsx","PDF"])
-        self.formato.place(x=755,y=665)
-        self.btnexportar=self.botones(740,580,"LISTADO","blue","white",cmd=self.listar_socios)
+        #self.formato=ttk.Combobox(self,font="16",values=["xlsx","PDF"])
+        #self.formato.place(x=755,y=665)
+        #self.btnexportar=self.botones(740,580,"LISTADO","blue","white",cmd=self.listar_socios)
 
 #---> vamos a definir todos los campos de entrada de socios.  
 #--> Nombre (nombre)      
@@ -1872,9 +1872,9 @@ class Proveedor(Frame):
 #    todos los registros de la BD de proveedor. Si self.id == -1, es una Alta, sino es una modificacion. 
     def altaproveedor(self):
         self.nombrepro.focus()
-        nombrep=self.nombrepro.get()
-        cifp=self.cifpro.get()
-        relp=self.relpro.get("1.0",END)
+        nombrep=self.nombrepro.get().upper()
+        cifp=self.cifpro.get().upper()
+        relp=self.relpro.get("1.0",END).upper()
         fecAp=self.fecApro.get()
         fecBp=self.fecBpro.get()  
         if self.id==-1:            
@@ -2048,23 +2048,24 @@ class Proveedor(Frame):
         treFrame.place(x=280,y=30,width=860,height=600)
         scroll=Scrollbar(treFrame)
         scroll.pack(side=RIGHT,fill=Y)
-        self.tre=ttk.Treeview(treFrame,yscrollcommand=scroll.set,height=40,columns=("#0","#1","#2","#3","#4","#5"))
+        self.tre=ttk.Treeview(treFrame,yscrollcommand=scroll.set,height=40,columns=("#0","#1","#2","#3"))#,"#4","#5"))
         self.tre.pack() 
         scroll.config(command=self.tre.yview)
         colors=("cyan","green")
         for color in colors:
             self.tre.tag_configure(color,background=color)
-        for i in [2,4,5]:
-            self.tre.column(f"#{i}",width=80,anchor=CENTER)
-        self.tre.column("#1",width=270,anchor=CENTER)
-        self.tre.column("#3",width=250,anchor=CENTER)
-        self.tre.column("#0",width=60,anchor=CENTER)      
+        #for i in [2,4,5]:
+        #    self.tre.column(f"#{i}",width=80,anchor=CENTER)
+        self.tre.column("#0",width=60,anchor=CENTER)    
+        self.tre.column("#1",width=320,anchor=CENTER)
+        self.tre.column("#2",width=100,anchor=CENTER)
+        self.tre.column("#3",width=380,anchor=CENTER)              
         self.tre.heading("#0",text="CODIGO",anchor=CENTER)
         self.tre.heading("#1",text="NOMBRE",anchor=CENTER)
         self.tre.heading("#2",text="C.I.F.",anchor=CENTER)
         self.tre.heading("#3",text="RELACION",anchor=CENTER)
-        self.tre.heading("#4",text="FECHA ALTA",anchor=CENTER)
-        self.tre.heading("#5",text="FECHA BAJA",anchor=CENTER)
+        #self.tre.heading("#4",text="FECHA ALTA",anchor=CENTER)
+        #self.tre.heading("#5",text="FECHA BAJA",anchor=CENTER)
         try:
             self.mostrar()
         except:
