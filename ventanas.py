@@ -677,7 +677,7 @@ class Socios(Frame):
         socios=Label(self,text="SOCIOS",bg="greenyellow",font="Arial 18")
         socios.pack()
         socios.place(x=0,y=0,height=30,width=1200)
-        self.frame=Frame(self,bg="lime green",bd=15,relief="groove")   
+        self.frame=Frame(self,bg="#EAE5E4",bd=15,relief="groove")   
         self.frame.place(x=0,y=30,width=1200,height=800) 
         self.check_1=IntVar()
         self.check_2=IntVar()
@@ -1108,7 +1108,7 @@ class Actividad(Frame):
         actividad=Label(self,text="ACTIVIDADES",bg="#33CBFF",font="Arial 18")
         actividad.pack()
         actividad.place(x=0,y=0,height=30,width=1200)
-        self.frame=Frame(self,bg="#9ACDD7",bd=15,relief="groove")   
+        self.frame=Frame(self,bg="#EAE5E4",bd=15,relief="groove")   
         self.frame.place(x=0,y=30,width=1200,height=800) 
         self.hoy=(datetime.today().strftime("%Y-%m-%d"))
         clavePar2 = ''
@@ -1434,7 +1434,7 @@ class Participes(Frame):
         actividad=Label(self,text="PARTICIPES",bg="#3368FF",font="Arial 18")
         actividad.pack()
         actividad.place(x=0,y=0,height=30,width=1200)
-        self.frame=Frame(self,bg="#339EFF",bd=15,relief="groove")   
+        self.frame=Frame(self,bg="#EAE5E4",bd=15,relief="groove")   
         self.frame.place(x=0,y=30,width=1200,height=800) 
         self.hoy=(datetime.today().strftime("%Y-%m-%d"))
 
@@ -1718,7 +1718,7 @@ class Apuntediario(Frame):
         apuntediario=Label(self,text="APUNTES - DIARIO",bg="yellow",font="Arial 18")
         apuntediario.pack()
         apuntediario.place(x=0,y=0,height=30,width=1200)
-        self.frame=Frame(self,bg="#DADB7F",bd=15,relief="groove")   
+        self.frame=Frame(self,bg="#EAE5E4",bd=15,relief="groove")   
         self.frame.place(x=0,y=30,width=1200,height=800) 
         self.hoy=(datetime.today().strftime("%Y-%m-%d"))
         self.saldoFinal=0
@@ -1990,7 +1990,7 @@ class Proveedor(Frame):
         proveedor=Label(self,text="PROVEEDORES",bg="#FF6633",font="Arial 18")
         proveedor.pack()
         proveedor.place(x=0,y=0,height=30,width=1200)
-        self.frame=Frame(self,bg="#EEAF82",bd=15,relief="groove")   
+        self.frame=Frame(self,bg="#EAE5E4",bd=15,relief="groove")   
         self.frame.place(x=0,y=30,width=1200,height=800) 
         self.hoy=(datetime.today().strftime("%Y-%m-%d"))
 
