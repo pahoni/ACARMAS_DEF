@@ -7,6 +7,9 @@
 
 
 ## Crear un ejecutable
+Establecer el entorno
+   $> pipenv shell
+   
 Instalar PyInstaller en el entorno:
    $> pip install pyinstaller
 
