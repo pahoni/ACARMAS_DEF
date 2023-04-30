@@ -7,8 +7,22 @@ from PIL import Image, ImageTk
 import cv2
 import imutils
 import sqlite3
+import json 
 import itertools
-# import pandas as pd
+import pandas as pd
+import matplotlib.animation as anim
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from arrow import utcnow
+from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle 
+from reportlab.lib.enums import TA_RIGHT,TA_CENTER,TA_LEFT
+from reportlab.platypus import Paragraph,SimpleDocTemplate,Spacer,Table,TableStyle
+from reportlab.lib.units import inch,mm
+from reportlab.lib.colors import white,green,black
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+import matplotlib.pyplot as pit
+from matplotlib.backends.backend_pdf import PdfPages
 
 
 #-------------------- clase Login
@@ -317,8 +331,26 @@ class Socios(Frame):
         command=cmd)
         btn.bind("<Enter>",on_enter)
         btn.bind("<Leave>",on_leave)
-        btn.place(x=x,y=y,width=200,height=40)    
-  
+        btn.place(x=x,y=y,width=180,height=40)    
+
+#--> Vamos a crear el metodo de listar la informacion de los socios, escogiendo los campos fundamentales.
+#    Realmente no se está listando, sino exportando un fichero, en formato PDF o xlsx.
+#    **** LOS FORMATOS csv  y  pdf  NO SE USAN DE MOMENTO  ****
+    def listar_socios(self):
+        formato=self.formato.get()
+        reporte=Reporte()
+        if formato=="PDF":
+            reporte.exportar()
+        elif formato == "pdf":
+            reporte.exportar1()
+        elif formato == "csv":
+            reporte.exportar2()
+        elif formato == "xlsx":
+            reporte.exportar3()
+        elif formato=="":
+            messagebox.showerror(title="LISTADOS",message="Elija un formato del Listado de socios")
+        self.formato.delete(0,END)    
+
 #--> Funcion para realizar instrucciones sobre la BD y recuperar el ultimo numero de socio y 
 #    mostrarlo, el superior a 9000 que son no-socios y socios-honorarios. 
 #    Falta recuperar el ultimo menor a 5000
@@ -667,11 +699,6 @@ class Socios(Frame):
             except sqlite3.OperationalError as error:
                     print("Eror en Modificacion BD: ", error)
 
-#--> Vamos a crear el metodo de listar la informacion de los socios, escogiendo los campos fundamentales.
-#    Realmente no se está listando, sino exportando un fichero, en formato PDF o xlsx.
-    #def listar_socios(self):
-    #    pass
-
 #--> Creamos los widgets y variables para Socios.
     def widgets(self):
         socios=Label(self,text="SOCIOS",bg="greenyellow",font="Arial 18")
@@ -686,9 +713,11 @@ class Socios(Frame):
         self.hoy=(datetime.today().strftime("%Y-%m-%d"))
         self.fecha=IntVar
         self.valido=False
-        #self.formato=ttk.Combobox(self,font="16",values=["xlsx","PDF"])
-        #self.formato.place(x=755,y=665)
-        #self.btnexportar=self.botones(740,580,"LISTADO","blue","white",cmd=self.listar_socios)
+        lblformato=Label(self,text="FORMATO",font="16",bg="#fbcada")
+        lblformato.place(x=860,y=668)
+        self.formato=ttk.Combobox(self,font="16",values=["xlsx","PDF"])
+        self.formato.place(x=955,y=668)
+
 
 #---> vamos a definir todos los campos de entrada de socios.  
 #--> Nombre (nombre)      
@@ -851,11 +880,14 @@ class Socios(Frame):
         onvalue=1,offvalue=0,variable=self.check_4,font="Ariel 12",bg="aquamarine")
         ChkImgOk.place(x=5,y=530,height=25)
 
-#--> Botones de las acciones "ALTA" - "CONSULTA" - "MODIFICACIONES/BAJA" 
+#--> Botones de las acciones "ALTA" - "CONSULTA" - "MODIFICACIONES/BAJA"  - "CANCELAR" 
+#    - "LISTAR SOCIOS"
+
         btnAlSo=self.botones(20,580,"ALTA","blue","white",cmd=self.altasocio)    
         btnCoSo=self.botones(250,580,"CONSULTA","blue","white",cmd=self.consulta_socio)
         btnMoSo=self.botones(500,580,"MODIFICACION/BAJA","blue","white",cmd=self.modifica_socio)        
-        btnCancelar=self.botones(950,580,"CANCELAR","blue","red",cmd=self.cancelar_operacion)
+        btnCancelar=self.botones(740,580,"CANCELAR","blue","red",cmd=self.cancelar_operacion)
+        btnexportar=self.botones(950,580,"GENERAR LISTADO","blue","white",cmd=self.listar_socios)
 
 #==============================================================================================
 #                    >>  REPORTE - Pertenece a los informes de Socios <<
@@ -864,9 +896,167 @@ class Socios(Frame):
 class Reporte:
     def __init__(self): 
         super(Reporte,self).__init__()
-        self.titulo="LISTA DE SOCIOS"
-        self.nombre="INFORME.pdf"
-        
+        self.titulo="LISTADO DE SOCIOS"
+        self.nombre="SOCIOS.pdf"
+        self.estilo=getSampleStyleSheet()
+        self.cabeceras=(
+            ("nombre","NOMBRE"),
+            ("apellidos","APELLIDOS"),
+            ("dni","D.N.I."),
+            ("numsoc","Nº. SOCIO"),
+            ("calle","DOMICILIO"),
+            ("telmov","TELF.MOVIL")
+        )
+
+#--> Agregamos los estilos a las cabeceras
+    def agregarE(self):
+        estiloEnca=ParagraphStyle(name="estiloEnca",alignment=TA_LEFT,fontSize=10,text=white,fontName="Helvetica-Bold",parent=self.estilo["Normal"])
+        estilo=self.estilo["Normal"]    
+        estilo.alignment=TA_LEFT
+        clave,valor=zip(*[[c,v] for c,v in self.cabeceras])
+        encabezado=[Paragraph(v,estiloEnca) for v in valor]
+        newdato=[tuple(encabezado)]
+        for dato in self.conexionbd():
+            newdato.append([Paragraph(str(dato[c]),estilo) for c in clave])
+        return newdato    
+
+#--> Vamos a crear una funcion para recuperar mis datos en formato Diccionario datos{}.
+    def conexionbd(self):
+        def set_datos(cursor,col):   
+            datos={}
+            for fila,colu in enumerate(cursor.description):
+                datos[colu[0]]=col[fila]
+            return datos
+        with sqlite3.connect("database.db") as conn:
+            conn.row_factory=set_datos
+            cursor=conn.cursor()
+            cursor.execute("SELECT id,nombre,apellidos,dni,numsoc,calle,telmov From socio")
+            datos=cursor.fetchall()
+            conn.commit
+        return datos              
+
+#--> Creamos una Tabla con sus estilos, con su fondo, aliniamento, los valores centrados, las grillas,
+#     los contornos o caja. El archivo temporal.         
+    def exportar(self):
+        def pie_pagina(canvas,nombre):
+            canvas.saveState()
+            estilo=getSampleStyleSheet()
+            alineacion=ParagraphStyle(name="alineacion",alignment=TA_RIGHT,parent=estilo["Normal"])
+            encabezadoN=Paragraph("Acarmas",estilo["Normal"])
+            _,_=encabezadoN.wrap(nombre.width,nombre.topMargin)
+            encabezadoN.drawOn(canvas,nombre.leftMargin,736)
+            
+            fecha=utcnow().to('local').format("dddd. DD / MMMM / YYYY", locale="es")
+            reporteF=fecha.replace("/", "de")
+            encabezadoF=Paragraph(reporteF,alineacion)
+            _,_=encabezadoF.wrap(nombre.width,nombre.topMargin)
+            encabezadoF.drawOn(canvas,nombre.leftMargin,736) 
+            
+            piePagina=Paragraph("LISTADO GENERADO POR ACARMAS",estilo["Normal"])
+            _,_=piePagina.wrap(nombre.width,nombre.bottomMargin)
+            piePagina.drawOn(canvas,nombre.leftMargin,16*mm+(0.2*inch))
+            canvas.restoreState()
+
+        tituloalign=ParagraphStyle(name="centrar",alignment=TA_CENTER,fontSize=10,Leading=10,textColor=green,parent=self.estilo["Heading1"])
+        self.ancho,self.alto=letter
+        datos=self.agregarE()
+        table=Table(datos,colWidths=(self.ancho-100)/len(self.cabeceras),hAlign="CENTER")
+        table.setStyle(TableStyle([
+            ("BACKGROUND",(0,0),(-1,0),green),
+            ("ALIGN",(0,0),(0,-1),"LEFT"),
+            ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
+            ("INNERGRID",(0,0),(-1,-1),0.8,black),
+            ("BOX",(0,0),(-1,-1),0.5,black),            
+        ]))
+        titulo=[Paragraph(self.titulo,tituloalign),Spacer(1,0.16*inch),table]
+        archivo=SimpleDocTemplate(self.nombre,leftMargin=50,rightMargin=50,pagesize=letter,title="listado",author="Acarmas")   
+        archivo.build(titulo,onFirstPage=pie_pagina,onLaterPages=pie_pagina,canvasmaker=Numeracion)
+
+#--> Vamos a exportar los datso de la BD de socio pero en un formato pdf, no tan elegante. 
+#    Y a continuacion vamos a crear un dataframe con los datos. A continuacion voy a crear una 
+#    figura y una pagina.Tambien voy a crear una carpeta llamada Listados donde guardo los listados 
+#    Y se cierra la pagina   ---- NO SE USA DE MOMENTO --
+    def exportar1(self):
+        with sqlite3.connect("database.db") as conn:
+            cursor=conn.cursor()
+            cursor.execute("SELECT id,nombre,apellidos,dni,numsoc,calle,telmov From socio")
+            resultado=cursor.fetchall()
+            conn.commit()    
+        df=pd.DataFrame([i for i in resultado],columns=("NOMBRE", "APELLIDOS", "DNI", "Nº. SOCIO", "DOMICILIO", "TLF. MOVIL"))
+        fig,ax=plt.subplot()
+        ax.axis("tight")
+        ax.axis("off")
+        ax.table(celltext=df.values,collabels=df.columns,loc="center")
+        p=PdfPages("listados/LISTADOS.pdf")
+        p.savefig(fig,bbox_inches="tight")
+        p.close()
+
+#--> Vamos a crear otro formato de fichero para exportar en formato CSV. Selecciono los 
+#    datos de la BD de socio. Los datos obtenidos los voy a mandar a un diccionario llamado reporte.
+#    Vamos a crear en este diccionario unas cabeceras, pero con valor.Y del resultado obtenido de 
+#    la BD voy a iterarlos. Creo a continuacion un dataframe, que va a contener todos los elementos
+#    del diccionario. 
+#    Y este dataframe lo voy a exportar en formato csv  ---- NO SE USA DE MOMENTO --
+
+    def exportar2(self):
+        with sqlite3.connect("database.db") as conn:
+            cursor=conn.cursor()
+            cursor.execute("SELECT id,nombre,apellidos,dni,numsoc,calle,telmov From socio")
+            resultado=cursor.fetchall()
+            conn.commit()    
+        reporte={"NOMBRE":[], "APELLIDOS":[], "DNI":[], "Nº. SOCIO":[], "DOMICILIO":[], "TLF. MOVIL":[]}  
+        for i in resultado:
+            reporte["NOMBRE"].append(i[0])
+            reporte["APELLIDOS"].append(i[1])
+            reporte["DNI"].append(i[2])
+            reporte["Nº. SOCIO"].append(i[3])
+            reporte["DOMICILIO"].append(i[4])
+            reporte["TLF. MOVIL"].append(i[5])  
+        reporte=pd.DataFrame(reporte)
+        reporte.to_csv("listados/LISTADO.csv",index=False,sep="\t") 
+
+#--> Vamos a crear otro metodo para exportar en formato de Excel xlsx. 
+#    Seria muy parecido al anterior.
+# 
+    def exportar3(self):           
+        with sqlite3.connect("database.db") as conn:
+            cursor=conn.cursor()
+            cursor.execute("SELECT id,nombre,apellidos,dni,numsoc,calle,telmov From socio")
+            resultado=cursor.fetchall()
+            conn.commit()    
+        reporte={"NOMBRE":[], "APELLIDOS":[], "DNI":[], "Nº. SOCIO":[], "DOMICILIO":[], "TLF. MOVIL":[]}  
+        for i in resultado:
+            reporte["NOMBRE"].append(i[1])
+            reporte["APELLIDOS"].append(i[2])
+            reporte["DNI"].append(i[3])
+            reporte["Nº. SOCIO"].append(i[4])
+            reporte["DOMICILIO"].append(i[5])
+            reporte["TLF. MOVIL"].append(i[6])  
+        reporte=pd.DataFrame(reporte)
+        reporte.to_excel("listados/LISTADO.xlsx") 
+
+#--> Clase que se crea para la numeracion de las paginas de los informes
+class Numeracion(canvas.Canvas):
+    def __init__(self,*args,**kwargs):
+        canvas.Canvas.__init__(self,*args,**kwargs)
+        self.paginas=[]
+
+    def showPage(self):
+        self.paginas.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        paginas=len(self.paginas)
+        for state in self.paginas:
+                self.__dict__.update(state)
+                self.numeracion(paginas)
+                canvas.Canvas.showPage(self)
+        canvas.Canvas.save(self)        
+
+    def numeracion(self,numpagina):
+        self.drawRightString(204*mm,15*mm+(0.2*inch),f"Pagina {self._pageNumber} de {numpagina}")                   
+
+
 #==============================================================================================
 #                                        >>  ACTIVIDAD <<
 #==============================================================================================
@@ -938,6 +1128,7 @@ class Actividad(Frame):
         if len(self.tre.get_children()) > 0:
             self.tre.selection_set(self.tre.get_children()[0])   
 
+
 #--> Funcion de dar de alta una actividad al pulsar el boton "ALTA "
     def alta_actividad(self):
         _claveAct=self.claveAct.get().upper()
@@ -952,7 +1143,7 @@ class Actividad(Frame):
         if _cosparAct == False or _cosparAct == "":
             _cosparAct=0.0
         _nummaxAct=self.nummaxAct.get()
-        _diasemAct=self.diasemAct.get().upper()
+        _diasemAct=self.diasemAct.get()
         _HiniAct=self.HiniAct.get().upper()
         _HfinAct=self.HfinAct.get().upper()
 
@@ -1168,10 +1359,13 @@ class Actividad(Frame):
 #--> Dia semanal de la actividad (diasemAct)
         lbldiasemAct=Label(self.frame,text="Dia semanal Actividad:",font="Ariel 12",bg="aquamarine",relief="sunken")
         lbldiasemAct.place(x=10,y=80)
-        self.diasemAct=Entry(self.frame,width=12,relief="raised",font="Ariel 13")
-        self.diasemAct.place(x=180,y=80,height=25)       
-        lblnomdiaAct=Label(self.frame,text="Lunes,Martes,Miercoles,Jueves,Viernes,Sabado,Domingo",font="Ariel 8",bg="aquamarine",relief="sunken")
-        lblnomdiaAct.place(x=10,y=110)
+        self.diasemAct=ttk.Combobox(self.frame,font="Ariel 11",values=["LUNES","MARTES","MIERCOLES","JUEVES","VIERNES","SABADO","DOMINGO"])
+        self.diasemAct.place(x=180,y=80)#,height=25)       
+        #self.diasemAct=Entry(self.frame,width=12,relief="raised",font="Ariel 13")
+        #lblnomdiaAct=Label(self.frame,text="Lunes,Martes,Miercoles,Jueves,Viernes,Sabado,Domingo",font="Ariel 8",bg="aquamarine",relief="sunken")
+        #lblnomdiaAct.place(x=10,y=110)
+
+
 
 #--> Hora comienzo de la actividad (HiniAct)
         lblHiniAct=Label(self.frame,text="Hora inicio Actividad:",font="Ariel 12",bg="aquamarine",relief="sunken")
