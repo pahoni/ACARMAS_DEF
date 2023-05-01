@@ -378,34 +378,6 @@ class Socios(Frame):
                 self.ultnumNosoc.insert(END,resultado[0])
             conn.commit()            
 
-#--> Funcion para Habilitar/Deshabilitar los campos de entrada - DE MOMENTO NO SE USA
-    def habilitar_campos(self,estado):
-        self.nombre.configure(state=estado)
-        self.apellidos.configure(state=estado)
-        self.fecA.configure(state=estado)
-        self.fecN.configure(state=estado)
-        self.fecB.configure(state=estado)
-        self.motB.configure(state=estado)
-        self.dni.configure(state=estado)
-        self.profe.configure(state=estado)
-        self.deudapen.configure(state=estado)
-        self.CargoMember.configure(state=estado)
-        self.numsoc.configure(state=estado)
-        self.estciv.configure(state=estado)
-        self.discapaci.configure(state=estado)
-        self.calle.configure(state=estado)
-        self.muni.configure(state=estado)
-        self.prov.configure(state=estado)
-        self.pais.configure(state=estado)
-        self.codpos.configure(state=estado)
-        self.telmov.configure(state=estado)
-        self.telfij.configure(state=estado)
-        self.corE.configure(state=estado)
-        self.nomcon.configure(state=estado)
-        self.apellcon.configure(state=estado)
-        self.telcon.configure(state=estado)
-        self.relcon.configure(state=estado)
-
 #--> Funcion para realizar instrucciones sobre la BD
     def eje_consulta(self,consulta,parametros=()):
         db=Datos()
@@ -447,6 +419,7 @@ class Socios(Frame):
         self.check_3.set(0)
         self.check_4.set(0)
 
+
 #--> Funcion para validar campos de entrada minimos
     def validacion_entrada(self,nombre,apellidos,fecA,numsoc):
         if len(nombre) > 0 and len(apellidos) > 0 and len(fecA) > 0 and numsoc > 0: 
@@ -455,7 +428,7 @@ class Socios(Frame):
 #--> Funcion para validar la fecha de entrada (obligatoria)        
     def valfecha(self,fechv):
         try:              
-            fechv=datetime.strptime(fechv,'%Y-%m-%d').date()            
+            fechv=datetime.strptime(fechv,'%d/%m/%Y').date()            
             return True
         except ValueError:                                
             return False
@@ -513,29 +486,53 @@ class Socios(Frame):
 #---> Validamos fecha de alta
 #---> Validamos que el numero de socio, sea numerico  
 
-        if self.validacion_entrada(nombre,apellidos,fecA,numsoc):          
-          fechv=fecA                    
-          if self.valfecha(fechv):       
-            numero=numsoc
-            if self.valida_numero(numero):
-                try:
-                    consulta=("""INSERT INTO socio VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""")                                            
-                    parametros=(nombre,apellidos,fecA,fecN,fecB,motB,dni,profe,deudapen,
+        if self.validacion_entrada(nombre,apellidos,fecA,numsoc):  
+           if self.comprobar_socio(nombre,apellidos): 
+              fechv=fecA                    
+              if self.valfecha(fechv):       
+                 numero=numsoc
+                 if self.valida_numero(numero):
+                    try:
+                        consulta=("""INSERT INTO socio VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""")                                            
+                        parametros=(nombre,apellidos,fecA,fecN,fecB,motB,dni,profe,deudapen,
                                 check_1,CargoMember,numsoc,estciv,discapaci,calle,muni,prov,
                                 pais,codpos,telmov,telfij,corE,nomcon,apellcon,telcon,relcon,
                                 check_2,check_3,check_4,self.hoy)
-                    self.eje_consulta(consulta,parametros)
-                    messagebox.showinfo(title="ALTA SOCIO",message="Alta Socio realizado con exito")                   
-                    self.limpiar_campos()                                       
-                except sqlite3.OperationalError as error:
-                    print("Eror en Alta BD: ", error)
-                    messagebox.showwarning(title="Error",message="ERROR AL DAR DE ALTA SOCIO") 
-            else:
+                        self.eje_consulta(consulta,parametros)
+                        messagebox.showinfo(title="ALTA SOCIO",message="Alta Socio realizado con exito")                   
+                        self.limpiar_campos()                                       
+                    except sqlite3.OperationalError as error:
+                        print("Eror en Alta BD: ", error)
+                        messagebox.showwarning(title="Error",message="ERROR AL DAR DE ALTA SOCIO") 
+                 else:
                     messagebox.showerror(title="ALTA SOCIO",message="La informacion solo debe ser numerica")
-          else:
-                messagebox.showerror(title="FECHA ALTA",message="Fecha debe ser formato AAAA-MM-DD")
+              else:
+                 messagebox.showerror(title="FECHA ALTA",message="Fecha debe ser formato dd/mm/aaaa")
+           else:
+              messagebox.showwarning(title="Alta socio",message="Alta - SOCIO YA EXISTE")
         else:
-            messagebox.showwarning(title="ALTA SOCIO",message="Rellene los campos,Nombre,Apellidos,Fecha Alta y nº Socio")
+           messagebox.showwarning(title="ALTA SOCIO",message="Rellene los campos,Nombre,Apellidos,Fecha Alta y nº Socio")
+
+#--> Funcion para comprobar que un socio que se pretende dar de alta, no exista ya, en su caso dar
+#    error
+    def comprobar_socio(self,nombre,apellidos):
+        try:
+            with sqlite3.connect("database.db") as conn:
+                 cursor = conn.cursor()
+                 consulta ='SELECT * FROM socio WHERE nombre = ? and apellidos = ?;'
+                 parametros = (nombre,apellidos,)
+                 cursor.execute(consulta, parametros)
+                 resultado = cursor.fetchone()
+                 conn.commit()
+        except sqlite3.OperationalError as error:
+                print("Eror en Alta-Consulta BD: ", error)
+                messagebox.showwarning(title="Error Alta-Consulta",message="Error en ALTA-CONSULTA SOCIO") 
+
+        if resultado is None:
+            return True                 
+        else:
+            return False
+
 
 #--> Funcion para CONSULTAR un socio al pulsar el boton "CONSULTA"-------------------------
     def consulta_socio(self):            
@@ -678,26 +675,30 @@ class Socios(Frame):
             _check_4=self.check_4.get()
             _fecUltAct=self.hoy
             _id=self.id
-            try:
-                parametro1=[_nombre,_apellidos,_fecA,_fecN,_fecB,_motB,_dni,_profe,_deudapen,
-                    _check_1,_CargoMember,_numsoc,_estciv,_discapaci,_calle,_muni,_prov,_pais,
-                    _codpos,_telmov,_telfij,_corE,_nomcon,_apellcon,_telcon,_relcon,_check_2,
-                    _check_3,_check_4,_fecUltAct,_id,]
-                consulta1="""UPDATE socio SET nombre = ?,apellidos = ?,fecA = ?,
+            if len(_nombre) > 0 and len(_apellidos): 
+                try:
+                    parametro1=[_nombre,_apellidos,_fecA,_fecN,_fecB,_motB,_dni,_profe,_deudapen,
+                        _check_1,_CargoMember,_numsoc,_estciv,_discapaci,_calle,_muni,_prov,_pais,
+                        _codpos,_telmov,_telfij,_corE,_nomcon,_apellcon,_telcon,_relcon,_check_2,
+                        _check_3,_check_4,_fecUltAct,_id,]
+                    consulta1="""UPDATE socio SET nombre = ?,apellidos = ?,fecA = ?,
                             fecN = ?,fecB = ?,motB = ?,dni = ?,profe = ?,deudapen = ?,MemberDir = ?,
                             CargoMember = ?,numsoc = ?,estciv = ?,discapaci = ?,calle = ?,muni = ?,
                             prov = ?,pais = ?,codpos = ?,telmov = ?,telfij = ?,corE = ?,nomcon = ?,
                             apellcon = ?,telcon = ?,relcon = ?,RGPD = ?,WhatsApp = ?,ImgOk = ?,
                             fecUltAct = ?  WHERE id = ?"""
-                with sqlite3.connect("database.db") as conn:
-                     cursor=conn.cursor()
-                     cursor.execute(consulta1,parametro1)                    
-                     conn.commit
-                     messagebox.showinfo(title="Modificacion",message="MODIFICACION REALIZADA CON EXITO")
-                     self.limpiar_campos()
-                     self.id=-1
-            except sqlite3.OperationalError as error:
-                    print("Eror en Modificacion BD: ", error)
+                    with sqlite3.connect("database.db") as conn:
+                         cursor=conn.cursor()
+                         cursor.execute(consulta1,parametro1)                    
+                         conn.commit
+                         messagebox.showinfo(title="Modificacion",message="MODIFICACION REALIZADA CON EXITO")
+                         self.limpiar_campos()
+                         self.id=-1
+                except sqlite3.OperationalError as error:
+                       print("Eror en Modificacion BD: ", error)
+            else:           
+                messagebox.showwarning(title="ERROR - MODIFICACION SOCIO",message="Rellene >> Nombre y 2 Apellidos << ")
+
 
 #--> Creamos los widgets y variables para Socios.
     def widgets(self):
@@ -710,14 +711,13 @@ class Socios(Frame):
         self.check_2=IntVar()
         self.check_3=IntVar()
         self.check_4=IntVar()
-        self.hoy=(datetime.today().strftime("%Y-%m-%d"))
+        self.hoy=(datetime.today().strftime("%d/%m/%Y"))
         self.fecha=IntVar
         self.valido=False
         lblformato=Label(self,text="FORMATO",font="16",bg="#fbcada")
         lblformato.place(x=860,y=668)
         self.formato=ttk.Combobox(self,font="16",values=["xlsx","PDF"])
         self.formato.place(x=955,y=668)
-
 
 #---> vamos a definir todos los campos de entrada de socios.  
 #--> Nombre (nombre)      
@@ -732,7 +732,7 @@ class Socios(Frame):
         self.apellidos.place(x=380,y=15,height=25)    
 
 #--> FECHAS
-        lblfofe=Label(self.frame,text=">> FECHAS: aaaa-mm-dd <<",font="Ariel 12",bg="orange",relief="sunken")
+        lblfofe=Label(self.frame,text=">> FECHAS: dd/mm/aaaa <<",font="Ariel 12",bg="orange",relief="sunken")
         lblfofe.place(x=5,y=55)
 #--> Fecha Alta (fecA)
         lblfecA=Label(self.frame,text="Fecha Alta:",font="Ariel 12",bg="aquamarine",relief="sunken")
@@ -1093,7 +1093,7 @@ class Actividad(Frame):
             return False
         else:
             try:
-                fechv=datetime.strptime(fechv,'%Y-%m-%d').date()            
+                fechv=datetime.strptime(fechv,'%d/%m/%Y').date()            
                 return True
             except ValueError:                                
                 return False
@@ -1153,7 +1153,7 @@ class Actividad(Frame):
            fechv=_finiAct
            #---> Validamos fecha de de inicio de la Actividad              
            if self.valfecha(fechv) == False:
-            messagebox.showerror(title="Fecha INICIO de Actividad",message="Fecha debe ser formato AAAA-MM-DD y Valida")                
+            messagebox.showerror(title="Fecha INICIO de Actividad",message="Fecha debe ser formato dd/mm/aaaa y Valida")                
            else:  
               if self.id==-1:  
                 try:                
@@ -1292,17 +1292,14 @@ class Actividad(Frame):
         self.btncancelar.configure(state=estado)    
         self.limpiar()
 
-    def dia_semana(self):
-        pass
-
     def widgets(self):
         actividad=Label(self,text="ACTIVIDADES",bg="#33CBFF",font="Arial 18")
         actividad.pack()
         actividad.place(x=0,y=0,height=30,width=1200)
         self.frame=Frame(self,bg="#EAE5E4",bd=15,relief="groove")   
         self.frame.place(x=0,y=30,width=1200,height=800) 
-        self.hoy=(datetime.today().strftime("%Y-%m-%d"))
-        clavePar2 = ''
+        self.hoy=(datetime.today().strftime("%d/%m/%Y"))
+        
 
 #--> Nombre de la actividad (nombreAct)      
         lblnombreAct=Label(self.frame,text="Nombre actividad:",font="Ariel 12",bg="aquamarine",relief="sunken")
@@ -1361,11 +1358,6 @@ class Actividad(Frame):
         lbldiasemAct.place(x=10,y=80)
         self.diasemAct=ttk.Combobox(self.frame,font="Ariel 11",values=["LUNES","MARTES","MIERCOLES","JUEVES","VIERNES","SABADO","DOMINGO"])
         self.diasemAct.place(x=180,y=80)#,height=25)       
-        #self.diasemAct=Entry(self.frame,width=12,relief="raised",font="Ariel 13")
-        #lblnomdiaAct=Label(self.frame,text="Lunes,Martes,Miercoles,Jueves,Viernes,Sabado,Domingo",font="Ariel 8",bg="aquamarine",relief="sunken")
-        #lblnomdiaAct.place(x=10,y=110)
-
-
 
 #--> Hora comienzo de la actividad (HiniAct)
         lblHiniAct=Label(self.frame,text="Hora inicio Actividad:",font="Ariel 12",bg="aquamarine",relief="sunken")
@@ -1383,7 +1375,6 @@ class Actividad(Frame):
 
 #--> Botones de  "ALTA ACT.", "REFRESCAR", 
 #    "MODIFICACION ACT.", "ELIMINAR ACT." y  "CANCELAR" de Actividad
- 
         self.btnagregar=self.botones(45,650,"ALTA ACT.","blue","white",cmd=self.alta_actividad)
         self.btnrefrescar=self.botones(215,650,"REFRESCAR","blue","white",cmd=self.mostrar)
         self.btnactualizar=self.botones(395,650,"ACTUALIZAR ACT.","blue","white",cmd=self.seleccionar) 
@@ -1476,7 +1467,7 @@ class Participes(Frame):
             return False
         else:
             try:
-                fechv=datetime.strptime(fechv,'%Y-%m-%d').date()            
+                fechv=datetime.strptime(fechv,'%d/%m/%Y').date()            
                 return True
             except ValueError:                                
                 return False
@@ -1575,12 +1566,7 @@ class Participes(Frame):
 
 #--> Funcion para eliminar un registro de un participe. Se borra solo este registro. 
     def eliminar(self):  
-        #clavePar2=""
         id=self.tre.item(self.tre.selection())["text"]
-        #valor=self.tre.item(self.tre.selection())["values"]
-        #print("valor :",valor)
-        #clavePar2=valor[0]
-        #print("clavePar2 :",clavePar2)
         res=messagebox.askquestion(title="Eliminar",message="¿Esta seguro de querer eliminar el participe?")
         if res=="yes":
             consulta="DELETE FROM participes WHERE id=?"
@@ -1747,7 +1733,7 @@ class Apuntediario(Frame):
             return False
         else:
             try:              
-                fechv=datetime.strptime(fechv,'%Y-%m-%d').date()            
+                fechv=datetime.strptime(fechv,'%d/%m/%Y').date()            
                 return True
             except ValueError:                                
                 return False
@@ -1801,7 +1787,7 @@ class Apuntediario(Frame):
            fechv=_fecAapu
            #---> Validamos fecha de alta              
            if self.valfecha(fechv) == False:
-            messagebox.showerror(title="Fecha ALTA apuntes",message="Fecha debe ser formato AAAA-MM-DD y Valida")                
+            messagebox.showerror(title="Fecha ALTA apuntes",message="Fecha debe ser formato dd/mm/aaaa y Valida")                
            else:  
               if self.id==-1:  
                 self.recuperar_saldo()                    
@@ -1914,7 +1900,7 @@ class Apuntediario(Frame):
         apuntediario.place(x=0,y=0,height=30,width=1200)
         self.frame=Frame(self,bg="#EAE5E4",bd=15,relief="groove")   
         self.frame.place(x=0,y=30,width=1200,height=800) 
-        self.hoy=(datetime.today().strftime("%Y-%m-%d"))
+        self.hoy=(datetime.today().strftime("%d/%m/%Y"))
         self.saldoFinal=0
 
 #---> vamos a definir todos los campos de entrada de los Apuntes Diario.  
@@ -2037,7 +2023,7 @@ class Proveedor(Frame):
 
     def valfecha(self,fechv):
         try:              
-            fechv=datetime.strptime(fechv,'%Y-%m-%d').date()            
+            fechv=datetime.strptime(fechv,'%d/%m/%Y').date()            
             return True
         except ValueError:                                
             return False
@@ -2084,7 +2070,7 @@ class Proveedor(Frame):
                     except:  
                         messagebox.showwarning(title="Error",message="Error en Alta de proveedor")
                 else:
-                    messagebox.showerror(title="Fecha ALTA Proveedor",message="Fecha debe ser formato AAAA-MM-DD")                
+                    messagebox.showerror(title="Fecha ALTA Proveedor",message="Fecha debe ser formato dd/mm/aaaa")                
             else:
                 messagebox.showwarning(title="Error",message="Rellene Nombre y CIF")   
         else:
@@ -2101,7 +2087,7 @@ class Proveedor(Frame):
                         conn.commit
                     messagebox.showinfo(title="Modificacion",message="MODIFICACION REALIZADA CON EXITO")    
                 else:
-                    messagebox.showerror(title="Fecha ALTA Proveedor",message="Fecha debe ser formato AAAA-MM-DD")                
+                    messagebox.showerror(title="Fecha ALTA Proveedor",message="Fecha debe ser formato dd/mm/aaaa")                
             else:
                 messagebox.showwarning(title="Error",message="Rellene Nombre y CIF")   
         self.limpiar()
@@ -2186,7 +2172,7 @@ class Proveedor(Frame):
         proveedor.place(x=0,y=0,height=30,width=1200)
         self.frame=Frame(self,bg="#EAE5E4",bd=15,relief="groove")   
         self.frame.place(x=0,y=30,width=1200,height=800) 
-        self.hoy=(datetime.today().strftime("%Y-%m-%d"))
+        self.hoy=(datetime.today().strftime("%d/%m/%Y"))
 
 #---> vamos a definir todos los campos de entrada de proveedor.  
 #--> Nombre (nombre)      
@@ -2258,8 +2244,6 @@ class Proveedor(Frame):
         self.tre.heading("#1",text="NOMBRE",anchor=CENTER)
         self.tre.heading("#2",text="C.I.F.",anchor=CENTER)
         self.tre.heading("#3",text="RELACION",anchor=CENTER)
-        #self.tre.heading("#4",text="FECHA ALTA",anchor=CENTER)
-        #self.tre.heading("#5",text="FECHA BAJA",anchor=CENTER)
         try:
             self.mostrar()
         except:
@@ -2267,5 +2251,5 @@ class Proveedor(Frame):
         self.tre.bind("<Double-1>",self.evento1)
         self.tre.bind("<Button-1>",self.evento2)    
 
-
+#############################   FINAL DE APLICACION   ####################################
     
